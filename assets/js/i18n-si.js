@@ -332,6 +332,14 @@ const SI_DICT = {
 
   'Pilimathalawa': 'පිළිමතලාව', 'Pilimathalawa brass': 'පිළිමතලාව පිත්තල', 'Sell with us': 'අප සමඟ විකුණන්න', 'sold': 'විකුණා ඇත', '{0} sold ·': '{0} ක් විකුණා ඇත ·', '{0} out of {1}': '{1} න් {0}', 'Sales {0}d': 'විකුණුම් දින {0}',
   'Region': 'කලාපය',
+  'Most popular': 'වඩාත් ජනප්‍රිය', 'The pieces buyers order most': 'ගැනුම්කරුවන් වැඩිපුරම ඇණවුම් කරන භාණ්ඩ', 'item': 'භාණ්ඩය', 'items': 'භාණ්ඩ', '{0} item': 'භාණ්ඩ {0}', '{0} items': 'භාණ්ඩ {0}',
+  'Pahan, Buddha statues and pooja items, cast and polished by family workshops near Kandy. Buy direct from the makers and pay in cash when it arrives.': 'මහනුවර අසල පවුල් වැඩපොළවල වාත්තු කර ඔප දැමූ පහන්, බුද්ධ ප්‍රතිමා සහ පූජා භාණ්ඩ. නිෂ්පාදකයන්ගෙන්ම කෙලින්ම මිලදී ගෙන, භාණ්ඩය ලැබුණු විට මුදල් ගෙවන්න.',
+  'Avurudu and wedding pahan': 'අවුරුදු සහ මංගල පහන්',
+  'Pilimathalawa lies on the old road from Kandy to Kadugannawa. Brass workers here have made pahan, Buddha statues and pooja items for viharas and homes for generations.': 'පිළිමතලාව පිහිටා ඇත්තේ මහනුවර සිට කඩුගන්නාවට යන පැරණි මාර්ගයේය. මෙහි පිත්තල ශිල්පීන් පරම්පරා ගණනාවක් තිස්සේ විහාර සහ නිවෙස් සඳහා පහන්, බුද්ධ ප්‍රතිමා සහ පූජා භාණ්ඩ නිපදවා ඇත.',
+  'Open your own shop on Pittala, list your pieces with photos and take cash-on-delivery orders from all over Sri Lanka.': 'Pittala හි ඔබේම වෙළඳසැලක් විවෘත කර, ඡායාරූප සමඟ භාණ්ඩ ලැයිස්තුගත කර, ශ්‍රී ලංකාව පුරා ඇණවුම් ලබා ගන්න.',
+  'Cast in brass': 'පිත්තලෙන් වාත්තු කළ', 'Temple Pahana — tall standing lamp, 3 feet': 'විහාර පහන — උස සිටුවන පහන, අඩි 3',
+  'Shop owner · Siri Pittala Works': 'වෙළඳසැල් හිමිකරු · සිරි පිත්තල වැඩපොළ',
+  '/ Delivery details': '/ බෙදාහැරීමේ විස්තර', '/ Register': '/ ලියාපදිංචිය', 'Skip to content': 'අන්තර්ගතයට යන්න',
   // Districts
   'Ampara': 'අම්පාර', 'Anuradhapura': 'අනුරාධපුරය', 'Badulla': 'බදුල්ල', 'Batticaloa': 'මඩකලපුව', 'Colombo': 'කොළඹ', 'Galle': 'ගාල්ල', 'Gampaha': 'ගම්පහ', 'Hambantota': 'හම්බන්තොට', 'Jaffna': 'යාපනය', 'Kalutara': 'කළුතර', 'Kandy': 'මහනුවර', 'Kegalle': 'කෑගල්ල',
   'Kilinochchi': 'කිලිනොච්චිය', 'Kurunegala': 'කුරුණෑගල', 'Mannar': 'මන්නාරම', 'Matale': 'මාතලේ', 'Matara': 'මාතර', 'Monaragala': 'මොණරාගල', 'Mullaitivu': 'මුලතිව්', 'Nuwara Eliya': 'නුවරඑළිය', 'Polonnaruwa': 'පොළොන්නරුව', 'Puttalam': 'පුත්තලම', 'Ratnapura': 'රත්නපුර', 'Trincomalee': 'ත්‍රිකුණාමලය', 'Vavuniya': 'වවුනියාව'

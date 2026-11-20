@@ -19,101 +19,69 @@ const badgeRow = shop => `<div class="badges">${shopBadges(shop).map(([c, t]) =>
 const sectionHead = (title, sub = '', more = '') => `<div class="sec-head reveal"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div>${more}</div>`;
 
 /* =================== HOME =================== */
+// Categories shown to buyers: only those with live products, pictured with a real product photo
+function liveCategories() {
+  const prods = Store.liveProducts();
+  return CATEGORIES.map(c => { const ps = prods.filter(p => p.category === c.id); return ps.length ? { ...c, img: ps.sort((a, b) => b.sold - a.sold)[0].images[0], count: ps.length } : null; }).filter(Boolean);
+}
+
 Pages.home = () => {
   const prods = Store.liveProducts();
   const deals = prods.filter(p => Store.isFlash(p) && !Store.soldOut(p)).sort((a, b) => a.dealEnds - b.dealEnds);
   const allDeals = prods.filter(p => Store.dealActive(p) && !Store.soldOut(p)).sort((a, b) => b.discount - a.discount);
-  const trending = [...prods].sort((a, b) => b.sold - a.sold).slice(0, 10);
-  const pooja = prods.filter(p => ['pooja', 'karaduwa', 'buddha'].includes(p.category)).sort((a, b) => b.sold - a.sold).slice(0, 10);
-  const newest = [...prods].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+  const popular = [...prods].sort((a, b) => b.sold - a.sold).slice(0, 10);
   const recent = Store.s.recent.map(id => Store.product(id)).filter(Boolean).slice(0, 10);
   const shops = Store.publishedShops().map(s => ({ s, st: Store.shopStats(s.id, 30), prods: prods.filter(p => p.shopId === s.id) })).sort((a, b) => (b.s.rating || 0) - (a.s.rating || 0));
   const totalSold = prods.reduce((a, p) => a + p.sold, 0);
   const artisans = Store.publishedShops().reduce((a, s) => a + (s.artisans || 0), 0);
   const st = Store.s.settings;
+  const cats = liveCategories();
 
-  onMount(mountCarousel);
   onMount(mountHome);
 
   return `
   <section class="vhero" aria-label="Pilimathalawa brass">
     <video autoplay muted loop playsinline preload="auto" poster="${PW.lampsTemple}"><source src="${VIDEOS.templeLamp}" type="video/mp4"></video>
-    <div class="embers" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 53) % 100}%;animation-duration:${7 + (i % 5) * 1.6}s;animation-delay:${(i * 0.7) % 9}s;--dx:${(i % 2 ? 1 : -1) * (10 + i * 3)}px"></i>`).join('')}</div>
-    <div class="frame" aria-hidden="true"></div>
     <div class="wrap"><div class="inner anim-in">
       <div class="si-title" data-notr>පිළිමතලාව පාරම්පරික පිත්තල</div>
       <h1>Hand-made brass from the village of Pilimathalawa</h1>
-      <p class="lede">Pahan, karaduwa, Buddha statues and pooja items, cast and polished by family workshops near Kandy. Buy direct from the makers and pay in cash when it arrives.</p>
+      <p class="lede">Pahan, Buddha statues and pooja items, cast and polished by family workshops near Kandy. Buy direct from the makers and pay in cash when it arrives.</p>
       <form class="hero-search" onsubmit="event.preventDefault();location.hash='#/shop?q='+encodeURIComponent(this.elements.hq.value)"><input name="hq" placeholder="What are you looking for? Try “pahana”" aria-label="Search"><button class="btn btn-brass">Search</button></form>
-      <div class="cta"><a class="btn btn-gold btn-lg" href="#/shop">Shop the collection</a><a class="btn btn-ghost btn-lg" href="#/deals">${icon('bolt')} Today’s deals</a></div>
+      <div class="cta"><a class="btn btn-gold btn-lg" href="#/shop">Shop the collection</a><a class="btn btn-ghost btn-lg" href="#/deals">Today’s deals</a></div>
       <div class="stats"><div><b data-count="${Store.publishedShops().length}">0</b><span>family workshops</span></div><div><b data-count="${artisans}">0</b><span>artisans</span></div><div><b data-count="${totalSold}">0</b><span>pieces sold</span></div></div>
     </div></div>
-    <div class="scroll-cue" aria-hidden="true"></div>
   </section>
 
-  <div class="ticker" aria-label="Highlights"><div class="track">${[0, 1].map(() => ['Cash on delivery islandwide', 'Hand-made in Pilimathalawa', `Free delivery over ${money(st.freeDeliveryOver)}`, 'Every order confirmed on WhatsApp', 'Vesak and Poson collections', 'Avurudu pahan and kendiya', 'Wedding punkalasa and heppuwa'].map(t => `<span>${t}</span>`).join('')).join('')}</div></div>
+  <div class="ticker" aria-label="Highlights"><div class="track">${[0, 1].map(() => ['Cash on delivery islandwide', 'Hand-made in Pilimathalawa', `Free delivery over ${money(st.freeDeliveryOver)}`, 'Every order confirmed on WhatsApp', 'Avurudu and wedding pahan', 'Vesak and Poson collections'].map(t => `<span>${t}</span>`).join('')).join('')}</div></div>
 
   <div class="wrap">
     <section class="block" style="padding-top:44px">
-      ${ornTitle('Shop by category', 'Traditional udarata brassware, each made by specialists in the village')}
-      <div class="cat-rail">${CATEGORIES.map((c, i) => `<a class="cat reveal" style="--d:${i * 0.06}s" href="#/shop?cat=${c.id}"><div class="ring"><img src="${esc(c.img)}" alt="" loading="lazy"></div><b>${esc(L(c, 'name'))}</b><small class="si" data-notr>${esc(isSi() ? c.name : c.si)}</small></a>`).join('')}</div>
+      ${ornTitle('Shop by category')}
+      <div class="cat-rail" style="--n:${cats.length}">${cats.map((c, i) => `<a class="cat reveal" style="--d:${i * 0.06}s" href="#/shop?cat=${c.id}"><div class="ring"><img src="${esc(c.img)}" alt="${esc(L(c, 'name'))}" loading="lazy"></div><b>${esc(L(c, 'name'))}</b><small>${c.count} ${c.count === 1 ? 'item' : 'items'}</small></a>`).join('')}</div>
     </section>
   </div>
 
   ${allDeals.length ? `<section class="block deals-band"><div class="wrap">
-    <div class="sec-head reveal"><div class="deal-head"><h2>${icon('bolt')} Daily deals</h2>${deals[0] ? `<span class="ends">Next deal ends in <b data-countdown="${deals[0].dealEnds}">${countdownText(deals[0].dealEnds)}</b></span>` : ''}</div><a class="link-more" href="#/deals">See all deals</a></div>
+    <div class="sec-head reveal"><div class="deal-head"><h2>Daily deals</h2>${deals[0] ? `<span class="ends">Next deal ends in <b data-countdown="${deals[0].dealEnds}">${countdownText(deals[0].dealEnds)}</b></span>` : ''}</div><a class="link-more" href="#/deals">See all deals</a></div>
     <div class="hscroll reveal">${allDeals.map(p => productCard(p)).join('')}</div>
   </div></section>` : ''}
 
   <div class="wrap">
     <section class="block">
-      ${ornTitle('Seasonal collections')}
-      <div class="carousel reveal" id="carousel">
-        ${HERO_SLIDES.map((s, i) => `<div class="slide ${i === 0 ? 'on' : ''}" style="--slide-bg:${s.bg}" aria-hidden="${i ? 'true' : 'false'}">
-          <div class="slide-text" style="background:${s.bg}"><span class="kicker">${esc(s.kicker)}</span><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p><a class="btn" href="${s.href}">${esc(s.cta)}</a></div>
-          <div class="slide-img"><img src="${esc(s.img)}" alt="" loading="lazy"></div>
-        </div>`).join('')}
-        <div class="car-dots">${HERO_SLIDES.map((_, i) => `<button class="${i === 0 ? 'on' : ''}" data-slide="${i}" aria-label="Slide ${i + 1}"></button>`).join('')}</div>
-        <div class="car-nav"><button data-dir="-1" aria-label="Previous slide">‹</button><button data-dir="1" aria-label="Next slide">›</button></div>
-      </div>
+      ${sectionHead('Most popular', 'The pieces buyers order most', '<a class="link-more" href="#/shop?sort=popular">See all</a>')}
+      <div class="hscroll reveal">${popular.map(p => productCard(p)).join('')}</div>
     </section>
 
     <section class="block" style="padding-top:0">
-      ${sectionHead('Trending in Pilimathalawa brass', 'The most-ordered pieces this month', '<a class="link-more" href="#/shop?sort=popular">See all</a>')}
-      <div class="hscroll reveal">${trending.map(p => productCard(p)).join('')}</div>
-    </section>
-  </div>
-
-  <section class="block patterned">
-    <div class="wrap">
-      ${ornTitle('From the brass village', 'Where every lamp begins: the temples and workshops around Pilimathalawa and Kandy')}
       <div class="vstory reveal">
-        <div class="vid"><video autoplay muted loop playsinline preload="metadata" poster="${PW.gadaladeniya}"><source src="${VIDEOS.buddhistTemple}" type="video/mp4"></video></div>
+        <div class="vid"><img src="${PW.lampKandy}" alt="A brass oil lamp made in the Kandy area" loading="lazy"></div>
         <div class="txt">
           <h2>Made by hand, the old udarata way</h2>
-          <p>Pilimathalawa lies on the old road from Kandy to Kadugannawa, close to the Gadaladeniya, Lankathilaka and Embekka temples. Brass workers here have made pahan, karaduwa and pooja items for viharas and homes for generations.</p>
+          <p>Pilimathalawa lies on the old road from Kandy to Kadugannawa. Brass workers here have made pahan, Buddha statues and pooja items for viharas and homes for generations.</p>
           <p>Molten brass is poured into sand moulds, then filed, chased with liyawela and lotus patterns, and polished to a golden shine.</p>
           <a class="btn btn-brass" href="#/about">Read the story</a> <a class="btn btn-ghost" href="#/stores">Meet the workshops</a>
         </div>
       </div>
-      <div class="reel">
-        ${[[VIDEOS.templeLamp, PW.lampsTemple, 'Pahan lit at the vihara'], [VIDEOS.rockTemple, PW.templeFacade, 'Temples of the hill country'], [VIDEOS.lakeTemple, PW.bahiravokanda, 'Sacred places of Sri Lanka']].map(([v, p, c], i) => `<figure class="reveal" style="--d:${i * 0.12}s"><video muted loop playsinline preload="none" poster="${p}" data-hoverplay><source src="${v}" type="video/mp4"></video><figcaption>${c}</figcaption></figure>`).join('')}
-      </div>
-    </div>
-  </section>
-
-  <div class="wrap">
-    <section class="block">
-      <div class="promo-row">
-        <a class="promo reveal" href="#/shop?cat=oil-lamps"><img src="${PW.lampsTemple}" alt="" loading="lazy"><div><b>Pahan for every occasion</b><span>Standing, hanging and table lamps</span></div></a>
-        <a class="promo reveal" style="--d:.1s" href="#/shop?cat=pooja"><img src="${PW.offering}" alt="" loading="lazy"><div><b>For the shrine room</b><span>Heppuwa, paththara, punkalasa and bells</span></div></a>
-        <a class="promo reveal" style="--d:.2s" href="#/shop?cat=karaduwa"><img src="${PW.daladaMaligawa}" alt="" loading="lazy"><div><b>Vesak & Poson</b><span>Karaduwa, Buddha statues and gifts</span></div></a>
-      </div>
-    </section>
-
-    <section class="block" style="padding-top:0">
-      ${sectionHead('For the temple and shrine room', '', '<a class="link-more" href="#/shop?cat=pooja">See all</a>')}
-      <div class="hscroll reveal">${pooja.map(p => productCard(p)).join('')}</div>
     </section>
 
     <section class="block" style="padding-top:10px">
@@ -123,31 +91,26 @@ Pages.home = () => {
 
     <section class="block" style="padding-top:0">
       <div class="trustbar reveal">
-        <div>${icon('coins')}<span><b>Cash on delivery</b><small>Pay when it arrives</small></span></div>
-        <div>${icon('truck')}<span><b>Islandwide delivery</b><small>Free over ${moneyShort(st.freeDeliveryOver)}</small></span></div>
-        <div>${icon('shield')}<span><b>Verified workshops</b><small>Approved by region agent</small></span></div>
-        <div>${icon('wa')}<span><b>Confirmed on WhatsApp</b><small>Before every dispatch</small></span></div>
+        <div><span><b>Cash on delivery</b><small>Pay when it arrives</small></span></div>
+        <div><span><b>Islandwide delivery</b><small>Free over ${moneyShort(st.freeDeliveryOver)}</small></span></div>
+        <div><span><b>Verified workshops</b><small>Approved by region agent</small></span></div>
+        <div><span><b>Confirmed on WhatsApp</b><small>Before every dispatch</small></span></div>
       </div>
-    </section>
-
-    <section class="block" style="padding-top:0">
-      ${sectionHead('New listings', '', '<a class="link-more" href="#/shop?sort=new">See all</a>')}
-      <div class="hscroll reveal">${newest.map(p => productCard(p)).join('')}</div>
     </section>
 
     ${recent.length ? `<section class="block" style="padding-top:0">${sectionHead('Your recently viewed items')}<div class="hscroll">${recent.map(p => productCard(p)).join('')}</div></section>` : ''}
 
     <section class="block" style="padding-top:0">
       <div class="sellbox reveal">
-        <div><h2>Own a brass workshop in Pilimathalawa?</h2><p>Open your shop on Pittala, list your pieces with photos, run deals and take cash-on-delivery orders from anywhere in Sri Lanka. You only pay commission when you sell.</p>
+        <div><h2>Own a brass workshop in Pilimathalawa?</h2><p>Open your own shop on Pittala, list your pieces with photos and take cash-on-delivery orders from all over Sri Lanka.</p>
           <div class="row-actions" style="margin-top:16px"><a class="btn btn-gold" href="#/register">Register your shop</a><a class="btn btn-ghost" href="#/sell">How it works</a></div></div>
-        ${commissionVisual(st)}
+        <div class="sell-photo"><img src="${PW.lampsBuddhist}" alt="" loading="lazy"></div>
       </div>
     </section>
 
     <section class="block" style="padding-top:10px">
       ${ornTitle('What buyers say')}
-      <div class="quotes">${Store.s.reviews.slice(0, 3).map((r, i) => { const p = Store.product(r.productId); return `<blockquote class="quote reveal" style="--d:${i * 0.1}s"><div>${stars(r.rating)}</div><p>“${esc(r.text)}”</p><footer>${esc(L(r, 'name'))} · <a class="link" href="#/product/${p.id}">${esc(L(p, 'name'))}</a></footer></blockquote>`; }).join('')}</div>
+      <div class="quotes">${Store.s.reviews.slice(0, 3).map((r, i) => { const p = Store.product(r.productId); return `<blockquote class="quote reveal" style="--d:${i * 0.1}s"><div>${stars(r.rating)}</div><p>“${esc(r.text)}”</p><footer>${esc(r.name)} · <a class="link" href="#/product/${p.id}">${esc(L(p, 'name'))}</a></footer></blockquote>`; }).join('')}</div>
     </section>
   </div>`;
 };
@@ -159,18 +122,7 @@ function mountHome() {
     const step = now => { const k = Math.min(1, (now - t0) / dur); el.textContent = Math.round(target * (1 - Math.pow(1 - k, 3))).toLocaleString(); if (k < 1) requestAnimationFrame(step); };
     requestAnimationFrame(step);
   });
-  // short reel videos play on hover (or when visible on touch screens)
-  const touch = window.matchMedia('(hover: none)').matches;
-  document.querySelectorAll('[data-hoverplay]').forEach(v => {
-    const fig = v.closest('figure');
-    if (touch) {
-      const io = new IntersectionObserver(es => es.forEach(e => { e.isIntersecting ? v.play().catch(() => {}) : v.pause(); }), { threshold: .6 });
-      io.observe(v); onCleanup(() => io.disconnect());
-    } else {
-      fig.addEventListener('mouseenter', () => v.play().catch(() => {}));
-      fig.addEventListener('mouseleave', () => v.pause());
-    }
-  });
+
 }
 
 function storeCard({ s, st, prods }, i = 0) {
@@ -283,7 +235,7 @@ Pages.shop = (q) => {
       <form class="filters" id="filterForm">
         <div class="fgroup"><h4>Category</h4>
           <a class="flink ${!cat ? 'on' : ''}" href="${link({ cat: '' })}">All categories</a>
-          ${CATEGORIES.map(x => `<a class="flink ${cat === x.id ? 'on' : ''}" href="${link({ cat: x.id })}">${esc(L(x, 'name'))} <span class="muted">(${countIn(x.id)})</span></a>`).join('')}
+          ${liveCategories().map(x => `<a class="flink ${cat === x.id ? 'on' : ''}" href="${link({ cat: x.id })}">${esc(L(x, 'name'))} <span class="muted">(${countIn(x.id)})</span></a>`).join('')}
         </div>
         <div class="fgroup"><h4>Price</h4>
           <div style="display:flex;gap:6px;align-items:center"><input class="input" name="min" type="number" min="0" placeholder="Rs. min" value="${esc(q.min || '')}" style="min-height:36px"><span>to</span><input class="input" name="max" type="number" min="0" placeholder="Rs. max" value="${esc(q.max || '')}" style="min-height:36px"></div>
@@ -540,7 +492,7 @@ Pages.deals = (q) => {
 /* =================== ABOUT =================== */
 Pages.about = () => `<div class="wrap" style="max-width:960px;padding-bottom:20px">
     <div class="page-head"><div class="crumbs"><a href="#/">Home</a> › About</div><h1 class="serif" style="font-size:2.2rem">The brass craft of Pilimathalawa</h1></div>
-    <img src="${PW.gadaladeniya}" alt="Gadaladeniya temple near Pilimathalawa" style="border-radius:14px;width:100%;aspect-ratio:21/9;object-fit:cover;margin-bottom:24px">
+    <img src="${PW.lampKandy}" alt="Brass oil lamp made in the Kandy area" style="border-radius:14px;width:100%;aspect-ratio:21/9;object-fit:cover;margin-bottom:24px">
     <div style="max-width:72ch;font-size:1.05rem">
       <p>Pilimathalawa is a town about 10 km from Kandy on the road to Kadugannawa. It sits close to the Gadaladeniya, Lankathilaka and Embekka temples, and it has long been known for traditional udarata brassware.</p>
       <p>Two kinds of work are done here. Cast work — oil lamps, Buddha statues, karaduwa and kendiya — is made by pouring molten brass into sand moulds. Sheet work — caskets, trays and pettagama — is beaten and chased by hand into patterns such as the liyawela vine and the lotus.</p>
@@ -551,7 +503,7 @@ Pages.about = () => `<div class="wrap" style="max-width:960px;padding-bottom:20p
     <div class="promo-row" style="margin-top:20px">
       <a class="promo" href="#/shop?cat=oil-lamps"><img src="${PW.lampsTemple}" alt="" loading="lazy"><div><b>Oil lamps</b><span>Pahan for home and temple</span></div></a>
       <a class="promo" href="#/shop?cat=pooja"><img src="${PW.lampsBuddhist}" alt="" loading="lazy"><div><b>Pooja items</b><span>For the shrine room</span></div></a>
-      <a class="promo" href="#/stores"><img src="${PW.templeFacade}" alt="" loading="lazy"><div><b>Meet the workshops</b><span>${Store.publishedShops().length} shops online</span></div></a>
+      <a class="promo" href="#/shop?cat=buddha"><img src="${PW.buddhaBrass}" alt="" loading="lazy"><div><b>Buddha statues</b><span>Cast in brass</span></div></a>
     </div>
   </div>`;
 Pages.craft = Pages.about;
@@ -581,14 +533,13 @@ Pages.sell = () => {
           <div class="pipe current"><b>4. Platform gives final approval</b><span>Your shop goes live and you start selling.</span></div>
         </div>
         <a class="btn btn-brass" href="#/register">Start your application</a></div>
-      ${commissionVisual(st)}
+      <div class="sell-photo" style="border-radius:16px;overflow:hidden;min-height:320px"><img src="${PW.lampTemple}" alt="" loading="lazy"></div>
     </div>
     <section class="block">${sectionHead('What every shop gets')}
-      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(250px,1fr))">${features.map(([i, t, d]) => `<div class="card" style="margin:0"><span style="color:var(--maroon)">${icon(i)}</span><h3 style="margin:8px 0 4px;font-size:1.05rem">${t}</h3><p class="muted" style="margin:0;font-size:.93rem">${d}</p></div>`).join('')}</div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(250px,1fr))">${features.map(([i, t, d]) => `<div class="card" style="margin:0;border-top:3px solid var(--gold)"><h3 style="margin:0 0 4px;font-size:1.05rem">${t}</h3><p class="muted" style="margin:0;font-size:.93rem">${d}</p></div>`).join('')}</div>
     </section>
     <section class="block" style="padding-top:0"><div class="card"><h3>Common questions</h3>
-      ${[['When do I pay commission?', `Commission is ${st.platformRate + st.agentRate}% of delivered order value (delivery fees excluded), settled monthly. Cancelled or returned orders are not charged.`],
-         ['Who handles delivery?', 'You do, using your usual courier. You collect the cash on delivery and keep the delivery fee shown to the buyer.'],
+      ${[['Who handles delivery?', 'You do, using your usual courier. You collect the cash on delivery and keep the delivery fee shown to the buyer.'],
          ['Can I still sell in my shop and elsewhere?', 'Yes. The agreement covers only orders placed through Pittala.lk.'],
          ['How do I know an order is genuine?', 'Every order includes the buyer’s verified mobile number. Use the WhatsApp button in your dashboard to confirm before you dispatch.']]
         .map(([a, b]) => `<details style="padding:12px 0;border-bottom:1px solid var(--line)"><summary style="font-weight:600;cursor:pointer">${a}</summary><p style="margin:8px 0 0" class="muted">${b}</p></details>`).join('')}

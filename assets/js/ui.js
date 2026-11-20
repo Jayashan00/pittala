@@ -48,7 +48,7 @@ const LOGO_MARK = `<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true"
   <path d="M17.6 25.2h4.8l1 4.3h-6.8z" fill="#DDB04A"/><rect x="13.5" y="29.3" width="13" height="2.6" rx="1.3" fill="#DDB04A"/>
 </svg>`;
 const ORN = `<svg viewBox="0 0 30 18" aria-hidden="true"><path d="M15 2 C19 7 19 11 15 16 C11 11 11 7 15 2Z" fill="currentColor"/><path d="M15 16 C9 15 5 12 3 8 C8 8 12 10 15 16Z M15 16 C21 15 25 12 27 8 C22 8 18 10 15 16Z" fill="currentColor" opacity=".7"/></svg>`;
-const ornTitle = (title, sub = '') => `<div class="orn-title reveal"><h2>${title}</h2><div class="orn">${ORN}</div>${sub ? `<p>${sub}</p>` : ''}</div>`;
+const ornTitle = (title, sub = '') => `<div class="orn-title reveal"><h2>${title}</h2><div class="orn"></div>${sub ? `<p>${sub}</p>` : ''}</div>`;
 const brandName = () => isSi() ? 'පිත්තල' : 'Pittala';
 const brandSub = () => isSi() ? 'පිළිමතලාව පිත්තල පොළ' : 'Pilimathalawa Brass Bazaar';
 
@@ -197,7 +197,7 @@ function renderHeader(route) {
       <button class="cat-btn" data-action="mega" aria-expanded="false">Shop by category ${icon('menu')}</button>
       <form class="search" id="searchForm" role="search">
         <div class="search-box">${icon('search')}<input type="search" id="q" placeholder="Search for pahana, karaduwa, Buddha statue…" autocomplete="off" aria-label="Search"></div>
-        <select id="qcat" aria-label="Category"><option value="">All categories</option>${CATEGORIES.map(c => `<option value="${c.id}" ${cat === c.id ? 'selected' : ''}>${esc(L(c, 'name'))}</option>`).join('')}</select>
+        <select id="qcat" aria-label="Category"><option value="">All categories</option>${liveCategories().map(c => `<option value="${c.id}" ${cat === c.id ? 'selected' : ''}>${esc(L(c, 'name'))}</option>`).join('')}</select>
         <button class="search-go">Search</button>
         <div class="search-suggest hide" id="suggest"></div>
       </form>
@@ -210,13 +210,13 @@ function renderHeader(route) {
     </div>
     <nav class="catbar" aria-label="Categories"><div class="wrap">
       <a href="#/" class="${route === '/' ? 'on' : ''}">Home</a>
-      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}" class="${cat === c.id ? 'on' : ''}">${esc(L(c, 'name'))}</a>`).join('')}
+      ${liveCategories().map(c => `<a href="#/shop?cat=${c.id}" class="${cat === c.id ? 'on' : ''}">${esc(L(c, 'name'))}</a>`).join('')}
       <a href="#/deals" class="deal ${route === '/deals' ? 'on' : ''}">Deals</a>
       <a href="#/stores" class="${route.startsWith('/store') ? 'on' : ''}">Shops</a>
     </div></nav>
     <div class="mega hide" id="mega"><div class="wrap">
-      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}"><img src="${esc(c.img)}" alt=""><span><b>${esc(L(c, 'name'))}</b><small class="si" data-notr>${esc(isSi() ? c.name : c.si)}</small></span></a>`).join('')}
-      <a href="#/deals"><span class="avatar" style="background:var(--sale)">%</span><span><b>Daily deals</b><small>Discounts with timers</small></span></a>
+      ${liveCategories().map(c => `<a href="#/shop?cat=${c.id}"><img src="${esc(c.img)}" alt=""><span><b>${esc(L(c, 'name'))}</b><small>${c.count} ${c.count === 1 ? 'item' : 'items'}</small></span></a>`).join('')}
+      <a href="#/deals"><span><b>Daily deals</b><small>Discounts with timers</small></span></a>
     </div></div>
   </header>`;
 }
@@ -236,7 +236,7 @@ function renderFooter() {
         <p style="margin-top:12px;max-width:40ch">The online marketplace of the brass workshops of Pilimathalawa, Kandy. Every order goes straight to the family that made it.</p>
         <div class="pay-badges"><span>Cash on delivery</span><span>Islandwide delivery</span><span>Verified sellers</span></div>
       </div>
-      <div><h4>Shop</h4>${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}">${esc(L(c, 'name'))}</a>`).join('')}</div>
+      <div><h4>Shop</h4>${liveCategories().map(c => `<a href="#/shop?cat=${c.id}">${esc(L(c, 'name'))}</a>`).join('')}</div>
       <div><h4>Buy</h4><a href="#/deals">Daily deals</a><a href="#/stores">All shops</a><a href="#/track">Track an order</a><a href="#/wishlist">Watchlist</a><a href="#/login">Sign in</a></div>
       <div><h4>Sell</h4><a href="#/sell">Sell on Pittala</a><a href="#/register">Register your shop</a><a href="#/login">Seller sign in</a><h4 style="margin-top:14px">Contact</h4><a href="mailto:${esc(st.supportEmail)}">${esc(st.supportEmail)}</a><a href="tel:${esc(st.supportPhone)}">${esc(st.supportPhone)}</a></div>
     </div>

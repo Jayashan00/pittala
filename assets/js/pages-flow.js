@@ -376,7 +376,7 @@ Pages.register = () => {
       <div class="field"><label>Email</label><input class="input" name="email" type="email" value="${esc(d.email || '')}"><span class="hint">You will receive order emails here.</span></div>
       <div class="field"><label>Create a password</label><input class="input" name="password" type="password" value="${esc(d.password || '')}"></div>
     </div>`;
-  if (step === 3) body = `${agreementText(d, st.agentRate + st.platformRate)}
+  if (step === 3) body = `<div style="margin-bottom:16px">${commissionVisual(st)}</div>${agreementText(d, st.agentRate + st.platformRate)}
       <label class="chk" style="margin-top:14px"><input type="checkbox" name="agree" ${d.agree ? 'checked' : ''}> I have read and accept the ${st.agentRate + st.platformRate}% commission agreement.</label>
       <div class="form-grid" style="margin-top:12px"><div class="field"><label>Type your full name to sign</label><input class="input" name="signedName" value="${esc(d.signedName || '')}"></div>
       <div class="field"><label>Signature</label><div class="signature" id="sigPreview">${esc(d.signedName || '')}</div><span class="hint">Signed ${fmtDate(Date.now())}</span></div></div>`;

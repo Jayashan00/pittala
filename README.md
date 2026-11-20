@@ -95,16 +95,15 @@ Colours: Kandyan maroon `#7B1C1C` and temple gold `#B8862B` on white. Fonts: Sou
 
 ## Photos
 
-Only Sri Lankan photos are used (Pexels, free licence): brass lamps photographed in Kandy and in
-Sri Lankan temples, Gadaladeniya temple (Pilimathalawa), the Temple of the Tooth and others.
-Free photos of some traditional items (karaduwa, kendiya, pettagama, heppuwa, paththara, punkalasa,
-bells) do not exist online, so those products use clean studio-style product renders generated in
-`assets/js/data.js` (`productArt`).
+Only real photos of brass are used: brass oil lamps photographed in Kandy and in Sri Lankan temples,
+and a brass Buddha statue (Pexels, free licence). The home page video is an oil lamp burning in a
+Sri Lankan temple (Pixabay, free licence).
 
-**Replace them with the shops' real photos before launch:**
-- Shop owners: Dashboard → Products → Edit → Photos → Upload photos.
-- Or edit the `images` of each product in `assets/js/data.js` (any image URL or a file in an
-  `assets/img/` folder), then run "Reset demo data" in the footer.
+The demo lists only items that have real photos (oil lamps, Buddha statues, pooja lamps).
+Other categories (karaduwa, kendiya, pettagama, gifts) are built in and appear automatically in the
+menus as soon as a shop adds a product with photos in that category.
+
+**Before launch, add the shops' own product photos:** Dashboard → Products → Edit → Upload photos.
 
 ## Connecting a backend (next phase)
 
