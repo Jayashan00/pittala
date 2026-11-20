@@ -3,7 +3,7 @@
 const ROUTES = {
   '': ['home', 'Pilimathalawa brass, direct from the makers'],
   shop: ['shop', 'Shop'], product: ['product', 'Product'], stores: ['stores', 'Shops'], store: ['store', 'Shop'],
-  deals: ['deals', 'Deals & flash sales'], craft: ['craft', 'Our craft'], sell: ['sell', 'Sell with us'],
+  deals: ['deals', 'Daily deals'], craft: ['craft', 'About'], about: ['about', 'About Pilimathalawa brass'], sell: ['sell', 'Sell on Pittala'],
   register: ['register', 'Register your shop'], login: ['login', 'Sign in'], cart: ['cart', 'Cart'],
   checkout: ['checkout', 'Checkout'], order: ['order', 'Order placed'], track: ['track', 'Track order'],
   wishlist: ['wishlist', 'Wishlist'], dashboard: ['dashboard', 'Dashboard']
@@ -56,32 +56,49 @@ const App = {
 };
 
 function bindSearch() {
+  const form = document.getElementById('searchForm');
   const input = document.getElementById('q');
   const box = document.getElementById('suggest');
-  if (!input) return;
+  if (!form) return;
   const { parts, q } = App.parse();
   if (parts[0] === 'shop' && q.q) input.value = q.q;
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const cat = document.getElementById('qcat').value;
+    const params = new URLSearchParams();
+    if (input.value.trim()) params.set('q', input.value.trim());
+    if (cat) params.set('cat', cat);
+    box.classList.add('hide');
+    location.hash = '#/shop' + (params.toString() ? '?' + params : '');
+  });
   input.addEventListener('input', () => {
     const t = input.value.trim().toLowerCase();
     if (t.length < 2) { box.classList.add('hide'); return; }
-    const prods = Store.liveProducts().filter(p => (p.name + ' ' + Store.cat(p.category).name).toLowerCase().includes(t)).slice(0, 5);
+    const prods = Store.liveProducts().filter(p => (p.name + ' ' + Store.cat(p.category).name).toLowerCase().includes(t)).slice(0, 6);
     const shops = Store.publishedShops().filter(s => s.name.toLowerCase().includes(t)).slice(0, 2);
-    if (!prods.length && !shops.length) { box.innerHTML = `<a href="#/shop?q=${encodeURIComponent(t)}">Search all for “${esc(t)}”</a>`; }
-    else box.innerHTML = shops.map(s => `<a href="#/store/${s.id}">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">Shop</small></span></a>`).join('')
+    const cats = CATEGORIES.filter(c => (c.name + ' ' + c.si).toLowerCase().includes(t)).slice(0, 2);
+    box.innerHTML = cats.map(c => `<a href="#/shop?cat=${c.id}">${icon('grid')}<span>in <b>${esc(c.name)}</b></span></a>`).join('')
+      + shops.map(s => `<a href="#/store/${s.id}">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">Shop</small></span></a>`).join('')
       + prods.map(p => `<a href="#/product/${p.id}"><img src="${esc(p.images[0])}" alt=""><span>${esc(p.name)}<br><small class="muted">${money(Store.priceOf(p))}${Store.soldOut(p) ? ' · sold out' : ''}</small></span></a>`).join('')
-      + `<a href="#/shop?q=${encodeURIComponent(t)}"><b>See all results</b></a>`;
+      + `<a href="#/shop?q=${encodeURIComponent(t)}">${icon('search')}<span>See all results for “${esc(t)}”</span></a>`;
     box.classList.remove('hide');
   });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') { location.hash = '#/shop?q=' + encodeURIComponent(input.value.trim()); box.classList.add('hide'); } });
   input.addEventListener('blur', () => setTimeout(() => box.classList.add('hide'), 200));
 }
 
 /* ---------- Click actions ---------- */
+function addedToCart(id, n) {
+  const p = Store.product(id);
+  openModal({ title: 'Added to your cart', body: `<div style="display:flex;gap:14px;align-items:center"><img src="${esc(p.images[0])}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:10px"><div><b>${esc(p.name)}</b><br><span class="muted">Qty ${n} · ${money(Store.priceOf(p) * n)}</span><br><span class="muted">Sold by ${esc(Store.shop(p.shopId).name)}</span></div></div>`,
+    foot: `<button class="btn btn-ghost" data-action="close-modal">Continue shopping</button><a class="btn btn-brass" href="#/cart" onclick="closeModal()">Go to cart (${Store.cartCount()})</a>` });
+}
+
 const Actions = {
   'close-modal': () => closeModal(),
-  menu: () => document.getElementById('mainNav').classList.toggle('open'),
-  add: el => { if (Store.addToCart(el.dataset.id)) { toast('Added to your cart.'); App.refreshHeader(); } },
-  'add-qty': el => { const n = Math.max(1, +document.getElementById('qty').value || 1); if (Store.addToCart(el.dataset.id, n)) { toast(`Added ${n} to your cart.`); App.refreshHeader(); } },
+  menu: () => document.getElementById('mega').classList.toggle('hide'),
+  mega: el => { const m = document.getElementById('mega'); m.classList.toggle('hide'); el.setAttribute('aria-expanded', !m.classList.contains('hide')); },
+  add: el => { if (Store.addToCart(el.dataset.id)) { App.refreshHeader(); addedToCart(el.dataset.id, 1); } },
+  'add-qty': el => { const n = Math.max(1, +document.getElementById('qty').value || 1); if (Store.addToCart(el.dataset.id, n)) { App.refreshHeader(); addedToCart(el.dataset.id, n); } },
   'buy-now': el => { const n = Math.max(1, +document.getElementById('qty').value || 1); const line = Store.s.cart.find(l => l.productId === el.dataset.id); if (line || Store.addToCart(el.dataset.id, n)) location.hash = '#/checkout'; },
   wish: el => {
     const id = el.dataset.id; const w = Store.s.wishlist;
@@ -206,4 +223,5 @@ document.addEventListener('change', e => {
 /* ---------- Boot ---------- */
 Store.load();
 window.addEventListener('hashchange', () => App.render());
+document.addEventListener('click', e => { const m = document.getElementById('mega'); if (m && !m.classList.contains('hide') && !e.target.closest('#mega, [data-action="mega"]')) m.classList.add('hide'); });
 App.render();

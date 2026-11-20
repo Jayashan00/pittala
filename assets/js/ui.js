@@ -41,26 +41,17 @@ const ICONS = {
 const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 const LOGO_MARK = `<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
-  <defs><linearGradient id="lg-b" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#F4DE9C"/><stop offset=".5" stop-color="#C9A34E"/><stop offset="1" stop-color="#8C6A24"/></linearGradient></defs>
-  <path d="M20 4c2.6 3.3 3.6 5.6 3.6 7.4A3.6 3.6 0 0 1 20 15a3.6 3.6 0 0 1-3.6-3.6C16.4 9.6 17.4 7.3 20 4z" fill="#A3301F"/>
-  <path d="M7 19h26c-1.2 5.3-6.4 9-13 9S8.2 24.3 7 19z" fill="url(#lg-b)"/>
-  <path d="M5 18.2h30" stroke="url(#lg-b)" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M17 28h6l1.5 5h-9z" fill="url(#lg-b)"/><rect x="12" y="33" width="16" height="3" rx="1.5" fill="url(#lg-b)"/>
+  <circle cx="20" cy="20" r="19" fill="#7B1C1C"/>
+  <path d="M20 7.5c2.2 2.7 3 4.6 3 6.1a3 3 0 0 1-6 0c0-1.5.8-3.4 3-6.1z" fill="#F3DD9B"/>
+  <path d="M10.5 18.5h19c-.9 4-4.8 6.8-9.5 6.8s-8.6-2.8-9.5-6.8z" fill="#E2B53F"/>
+  <path d="M17.6 25.2h4.8l1 4.3h-6.8z" fill="#E2B53F"/><rect x="13.5" y="29.3" width="13" height="2.6" rx="1.3" fill="#E2B53F"/>
 </svg>`;
 
-const SEAL = `<svg viewBox="0 0 200 200" aria-label="Sold out" role="img">
-  <defs><path id="sealc" d="M100 100 m-74 0 a74 74 0 1 1 148 0 a74 74 0 1 1 -148 0"/></defs>
-  <circle cx="100" cy="100" r="94" fill="rgba(163,48,31,.92)"/>
-  <circle cx="100" cy="100" r="86" fill="none" stroke="#F6E1DC" stroke-width="2"/>
-  <circle cx="100" cy="100" r="58" fill="none" stroke="#F6E1DC" stroke-width="1.5" stroke-dasharray="3 4"/>
-  <text font-family="Manrope, sans-serif" font-size="13" font-weight="800" fill="#F6E1DC" letter-spacing="3"><textPath href="#sealc">PILIMATHALAWA ✦ PITTALA.LK ✦ HANDMADE ✦ </textPath></text>
-  <text x="100" y="96" text-anchor="middle" font-family="Marcellus, serif" font-size="30" fill="#fff">Sold</text>
-  <text x="100" y="126" text-anchor="middle" font-family="Marcellus, serif" font-size="30" fill="#fff">out</text>
-</svg>`;
+const sealHTML = (lg = false) => `<div class="seal ${lg ? 'seal-lg' : ''}" aria-label="Sold out"><div class="seal-stamp">SOLD OUT<small>PILIMATHALAWA</small></div></div>`;
+const SEAL = sealHTML();
 
-const FALLBACK_IMG = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#24514A"/><stop offset="1" stop-color="#0E2421"/></linearGradient><linearGradient id="b" x1="0" x2="1"><stop offset="0" stop-color="#F4DE9C"/><stop offset="1" stop-color="#8C6A24"/></linearGradient></defs><rect width="400" height="500" fill="url(#g)"/><path d="M200 170c14 18 20 30 20 40a20 20 0 0 1-40 0c0-10 6-22 20-40z" fill="#A3301F"/><path d="M120 250h160c-7 32-38 54-80 54s-73-22-80-54z" fill="url(#b)"/><rect x="185" y="300" width="30" height="40" fill="url(#b)"/><rect x="160" y="338" width="80" height="12" rx="6" fill="url(#b)"/></svg>`);
+const FALLBACK_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#EFEFEF"/><g fill="none" stroke="#B5B5B5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="120" y="140" width="160" height="120" rx="12"/><circle cx="170" cy="185" r="14"/><path d="M128 250l50-46 34 30 26-20 42 36"/></g><text x="200" y="300" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#9A9A9A">Photo unavailable</text></svg>');
 
-// Any broken remote image gets a brass placeholder instead of an empty box
 document.addEventListener('error', e => {
   const t = e.target;
   if (t && t.tagName === 'IMG' && !t.dataset.fb) { t.dataset.fb = '1'; t.src = FALLBACK_IMG; }
@@ -123,6 +114,12 @@ function tickTimers() {
 setInterval(tickTimers, 1000);
 
 /* ----- product card ----- */
+function shipText(p) {
+  const st = Store.s.settings;
+  return Store.priceOf(p) >= st.freeDeliveryOver ? '<span class="ship free">Free delivery</span>' : `<span class="ship">+${money(st.deliveryOther)} delivery · Cash on delivery</span>`;
+}
+function feedbackPct(shop) { return shop.rating ? Math.min(100, 95 + (shop.rating - 4) * 5).toFixed(1) : null; }
+
 function productCard(p, opts = {}) {
   const shop = Store.shop(p.shopId);
   const sold = Store.soldOut(p);
@@ -131,22 +128,40 @@ function productCard(p, opts = {}) {
   return `<article class="pcard ${sold ? 'is-sold' : ''}">
     <a class="pcard-media" href="#/product/${p.id}" aria-label="${esc(p.name)}">
       <img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy">
-      ${deal && !sold ? `<span class="tag-deal">−${p.discount}%</span>` : ''}
       ${p.badge && !sold ? `<span class="tag-badge">${esc(p.badge)}</span>` : ''}
-      ${sold ? `<div class="seal">${SEAL}</div>` : ''}
+      ${sold ? SEAL : ''}
     </a>
-    <button class="wish ${wished ? 'on' : ''}" data-action="wish" data-id="${p.id}" aria-label="${wished ? 'Remove from' : 'Save to'} wishlist" aria-pressed="${wished}">${icon('heart')}</button>
+    <button class="wish ${wished ? 'on' : ''}" data-action="wish" data-id="${p.id}" aria-label="${wished ? 'Remove from' : 'Add to'} watchlist" aria-pressed="${wished}">${icon('heart')}</button>
+    ${sold ? '' : `<button class="btn btn-brass btn-sm quick-add" data-action="add" data-id="${p.id}">${icon('cart')} Add to cart</button>`}
     <div class="pcard-body">
-      ${opts.hideShop ? '' : `<a class="pcard-shop" href="#/store/${shop.id}">${esc(shop.name)}</a>`}
       <h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3>
-      <span class="rating">${stars(p.rating)} <span>(${p.reviews})</span></span>
-      <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s>` : ''}</div>
+      <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s><span class="off">${p.discount}% off</span>` : ''}</div>
       ${Store.isFlash(p) && !sold ? miniTimer(p.dealEnds) : ''}
-      ${!sold && p.stock <= 3 ? `<span class="low-stock">Only ${p.stock} left</span>` : ''}
-      <div class="pcard-foot">
-        ${sold ? `<button class="btn btn-ghost btn-sm btn-block" data-action="notify" data-id="${p.id}">Notify me when back</button>`
-               : `<button class="btn btn-dark btn-sm btn-block" data-action="add" data-id="${p.id}">${icon('cart')} Add to cart</button>`}
+      ${sold ? '<span class="sold-line hot">Sold out</span>' : shipText(p)}
+      ${!sold && p.stock <= 3 ? `<span class="low-stock">Only ${p.stock} left</span>` : p.sold >= 40 ? `<span class="sold-line hot">${p.sold} sold</span>` : p.sold ? `<span class="sold-line">${p.sold} sold</span>` : ''}
+      ${opts.hideShop ? '' : `<a class="pcard-shop" href="#/store/${shop.id}">${esc(shop.name)}${shop.rating ? ` · ${feedbackPct(shop)}% positive` : ''}</a>`}
+    </div>
+  </article>`;
+}
+
+function listRow(p) {
+  const shop = Store.shop(p.shopId);
+  const sold = Store.soldOut(p);
+  const deal = Store.dealActive(p);
+  return `<article class="lrow ${sold ? 'is-sold' : ''} pcard">
+    <a class="pcard-media" href="#/product/${p.id}"><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy">${sold ? SEAL : ''}</a>
+    <div>
+      <h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3>
+      <span class="muted" style="font-size:.85rem">${esc(Store.cat(p.category).name)} · ${esc(p.finish)}</span>
+      <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s><span class="off">${p.discount}% off</span>` : ''}</div>
+      <div class="meta">
+        ${Store.isFlash(p) && !sold ? `<span>${miniTimer(p.dealEnds)}</span>` : ''}
+        <span>${sold ? '<b style="color:var(--sale)">Sold out</b>' : shipText(p)}</span>
+        <span>${p.sold} sold · <span class="rating">${stars(p.rating)} (${p.reviews})</span></span>
+        <span>Seller: <a class="link" href="#/store/${shop.id}">${esc(shop.name)}</a>${shop.rating ? ` (${feedbackPct(shop)}% positive)` : ''} · Pilimathalawa, Kandy</span>
       </div>
+      <div class="row-actions" style="margin-top:10px">${sold ? `<button class="btn btn-ghost btn-sm" data-action="notify" data-id="${p.id}">Notify me when back</button>` : `<button class="btn btn-brass btn-sm" data-action="add" data-id="${p.id}">Add to cart</button>`}
+        <button class="btn btn-ghost btn-sm" data-action="wish" data-id="${p.id}">${icon('heart')} ${Store.s.wishlist.includes(p.id) ? 'Watching' : 'Watch'}</button></div>
     </div>
   </article>`;
 }
@@ -154,25 +169,47 @@ function productCard(p, opts = {}) {
 /* ----- header / footer ----- */
 function renderHeader(route) {
   const u = Store.user();
-  const deals = Store.liveProducts().filter(p => Store.isFlash(p) && !Store.soldOut(p));
-  const soonest = deals.sort((a, b) => a.dealEnds - b.dealEnds)[0];
-  const nav = [['#/shop', 'Shop'], ['#/deals', 'Deals'], ['#/stores', 'Shops'], ['#/craft', 'Our craft'], ['#/sell', 'Sell with us'], ['#/track', 'Track order']];
+  const { q } = App.parse();
+  const deals = Store.liveProducts().filter(p => Store.isFlash(p) && !Store.soldOut(p)).length;
+  const cat = route === '/shop' ? (q.cat || '') : '';
+  const greet = u ? `Hi <b>${esc(u.name.split(' ')[0])}</b>! <a class="link" href="#" data-action="logout">Sign out</a>` : `Hi! <a class="link" href="#/login">Sign in</a> or buy as a guest`;
   return `
-  ${soonest ? `<div class="announce"><div class="wrap"><span>${icon('bolt')}</span><span>Flash deals end in <b data-countdown="${soonest.dealEnds}">${countdownText(soonest.dealEnds)}</b></span><span class="hide-sm">Cash on delivery islandwide</span><a href="#/deals">See all deals</a></div></div>` : ''}
+  <div class="topbar"><div class="wrap">
+    <span>${greet}</span>
+    <a href="#/deals" class="deal-pill">Daily Deals${deals ? ` (${deals})` : ''}</a>
+    <a href="#/stores" class="hide-md">Shops</a>
+    <a href="#/track" class="hide-md">Track order</a>
+    <span class="sp"></span>
+    <a href="#/sell">Sell on Pittala</a>
+    <a href="#/about" class="hide-md">About Pilimathalawa brass</a>
+    <a href="tel:${esc(Store.s.settings.supportPhone)}" class="hide-md">Help: ${esc(Store.s.settings.supportPhone)}</a>
+  </div></div>
   <header class="site-header">
-    <div class="wrap">
-      <button class="icon-btn menu-btn" data-action="menu" aria-label="Menu">${icon('menu')}</button>
-      <a class="logo" href="#/" aria-label="Pittala.lk home">${LOGO_MARK}<span class="logo-text">Pittala<small>Pilimathalawa brass, online</small></span></a>
-      <nav class="main-nav" id="mainNav">
-        ${nav.map(([h, l]) => `<a href="${h}" class="${route.startsWith(h.slice(1)) ? 'active' : ''} ${l === 'Deals' ? 'deal-link' : ''}">${l}</a>`).join('')}
-      </nav>
-      <div class="search">${icon('search')}<input type="search" id="q" placeholder="Search lamps, statues, shops…" autocomplete="off" aria-label="Search products"><div class="search-suggest hide" id="suggest"></div></div>
+    <div class="wrap head-main">
+      <a class="logo" href="#/" aria-label="Pittala.lk home">${LOGO_MARK}<span class="logo-text">Pittala<small>Pilimathalawa Brass Bazaar</small></span></a>
+      <button class="cat-btn" data-action="mega" aria-expanded="false">Shop by<br>category ${icon('menu')}</button>
+      <form class="search" id="searchForm" role="search">
+        <div class="search-box">${icon('search')}<input type="search" id="q" placeholder="Search for pahana, karaduwa, Buddha statue…" autocomplete="off" aria-label="Search"></div>
+        <select id="qcat" aria-label="Category"><option value="">All categories</option>${CATEGORIES.map(c => `<option value="${c.id}" ${cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+        <button class="search-go">Search</button>
+        <div class="search-suggest hide" id="suggest"></div>
+      </form>
       <div class="header-actions">
-        <a class="icon-btn" href="#/wishlist" aria-label="Wishlist">${icon('heart')}${Store.s.wishlist.length ? `<span class="count">${Store.s.wishlist.length}</span>` : ''}</a>
+        <a class="icon-btn" href="#/wishlist" aria-label="Watchlist">${icon('heart')}${Store.s.wishlist.length ? `<span class="count">${Store.s.wishlist.length}</span>` : ''}</a>
         <a class="icon-btn" href="#/cart" aria-label="Cart">${icon('cart')}${Store.cartCount() ? `<span class="count">${Store.cartCount()}</span>` : ''}</a>
-        ${u ? (u.role === 'customer' ? `<a class="btn btn-dark btn-sm" href="#/dashboard/orders" aria-label="My orders">${icon('user')} <span class="lbl">My orders</span></a>` : `<a class="btn btn-dark btn-sm" href="#/dashboard">${icon('grid')} <span class="lbl">Dashboard</span></a>`) : `<a class="btn btn-brass btn-sm" href="#/login" aria-label="Sign in">${icon('user')} <span class="lbl">Sign in</span></a>`}
+        ${u ? (u.role === 'customer' ? `<a class="btn btn-ghost btn-sm" href="#/dashboard/orders">${icon('user')} <span class="lbl">My orders</span></a>` : `<a class="btn btn-dark btn-sm" href="#/dashboard">${icon('grid')} <span class="lbl">Dashboard</span></a>`) : ''}
       </div>
     </div>
+    <nav class="catbar" aria-label="Categories"><div class="wrap">
+      <a href="#/" class="${route === '/' ? 'on' : ''}">Home</a>
+      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}" class="${cat === c.id ? 'on' : ''}">${esc(c.name)}</a>`).join('')}
+      <a href="#/deals" class="deal ${route === '/deals' ? 'on' : ''}">Deals</a>
+      <a href="#/stores" class="${route.startsWith('/store') ? 'on' : ''}">Shops</a>
+    </div></nav>
+    <div class="mega hide" id="mega"><div class="wrap">
+      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}"><img src="${esc(c.img)}" alt=""><span><b>${esc(c.name)}</b><small class="si">${esc(c.si)}</small></span></a>`).join('')}
+      <a href="#/deals"><span class="avatar" style="background:var(--sale)">%</span><span><b>Daily deals</b><small>Discounts with timers</small></span></a>
+    </div></div>
   </header>`;
 }
 
@@ -181,15 +218,15 @@ function renderFooter() {
   return `<footer class="site-footer"><div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="logo" href="#/">${LOGO_MARK}<span class="logo-text" style="color:#F1EBD8">Pittala</span></a>
-        <p style="margin-top:14px;max-width:38ch">A marketplace for the brass workshops of Pilimathalawa, Kandy. Every order goes straight to the family that made it. Pay in cash when it reaches your door.</p>
-        <p class="si" style="color:var(--brass-light);font-size:1.1rem">පිළිමතලාව පිත්තල</p>
+        <a class="logo" href="#/">${LOGO_MARK}<span class="logo-text">Pittala<small>Pilimathalawa Brass Bazaar</small></span></a>
+        <p style="margin-top:12px;max-width:40ch">The online marketplace of the brass workshops of Pilimathalawa, Kandy. Every order goes straight to the family that made it.</p>
+        <div class="pay-badges"><span>Cash on delivery</span><span>Islandwide delivery</span><span>Verified sellers</span></div>
       </div>
-      <div><h4>Shop</h4>${CATEGORIES.slice(0, 6).map(c => `<a href="#/shop?cat=${c.id}">${c.name}</a>`).join('')}</div>
-      <div><h4>Marketplace</h4><a href="#/stores">All shops</a><a href="#/deals">Deals & flash sales</a><a href="#/craft">The craft</a><a href="#/track">Track an order</a><a href="#/wishlist">Wishlist</a></div>
-      <div><h4>For artisans</h4><a href="#/sell">Sell with us</a><a href="#/register">Register your shop</a><a href="#/login">Seller sign in</a><a href="mailto:${st.supportEmail}">${st.supportEmail}</a><a href="tel:${st.supportPhone}">${st.supportPhone}</a></div>
+      <div><h4>Shop</h4>${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}">${esc(c.name)}</a>`).join('')}</div>
+      <div><h4>Buy</h4><a href="#/deals">Daily deals</a><a href="#/stores">All shops</a><a href="#/track">Track an order</a><a href="#/wishlist">Watchlist</a><a href="#/login">Sign in</a></div>
+      <div><h4>Sell</h4><a href="#/sell">Sell on Pittala</a><a href="#/register">Register your shop</a><a href="#/login">Seller sign in</a><h4 style="margin-top:14px">Contact</h4><a href="mailto:${esc(st.supportEmail)}">${esc(st.supportEmail)}</a><a href="tel:${esc(st.supportPhone)}">${esc(st.supportPhone)}</a></div>
     </div>
-    <div class="foot-bottom"><span>© ${new Date().getFullYear()} Pittala.lk · Pilimathalawa, Kandy, Sri Lanka</span><span>Photos: Pexels contributors · <a href="#" data-action="reset-demo" style="display:inline">Reset demo data</a></span></div>
+    <div class="foot-bottom"><span>© ${new Date().getFullYear()} Pittala.lk — Pilimathalawa, Kandy, Sri Lanka</span><span>Photos: Sri Lankan photographers on Pexels · <a href="#" data-action="reset-demo" style="display:inline">Reset demo data</a></span></div>
   </div></footer>`;
 }
 

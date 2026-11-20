@@ -2,7 +2,7 @@
    Frontend-only demo: data lives in the browser (localStorage) so the client
    can click through every role. Swap these functions for API calls later. */
 
-const KEY = 'pittala-state-v3';
+const KEY = 'pittala-state-v4';
 let memoryFallback = null;
 
 const Store = {
@@ -12,7 +12,7 @@ const Store = {
     let raw = null;
     try { raw = localStorage.getItem(KEY); } catch (e) { raw = memoryFallback; }
     if (raw) { try { this.s = JSON.parse(raw); } catch (e) { this.s = null; } }
-    if (!this.s || this.s.version !== 3) this.s = buildSeed();
+    if (!this.s || this.s.version !== 4) this.s = buildSeed();
     this.refreshDemoDeals();
     this.save();
   },

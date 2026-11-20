@@ -15,7 +15,7 @@ function chart(id, cfg) {
 }
 function destroyCharts() { charts.forEach(c => { try { c.destroy(); } catch (e) {} }); charts = []; }
 
-const BRASS = '#C9A34E', PATINA = '#24514A', LACQ = '#A3301F';
+const BRASS = '#B8862B', PATINA = '#7B1C1C', LACQ = '#C8102E';
 const kpi = (label, value, sub = '', cls = '') => `<div class="kpi ${cls}"><span>${label}</span><b>${value}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
 
 function dailySeries(orders, days = 30, valueFn = o => o.subtotal) {
@@ -324,8 +324,10 @@ function designView(shop) {
     const f = document.getElementById('designForm');
     const prev = document.getElementById('designPreview');
     const paint = () => {
-      prev.innerHTML = `<div style="--shop-c:${esc(d.color)}"><section class="store-hero f-${esc(d.font)}" style="min-height:230px"><img src="${esc(d.banner)}" alt=""><div class="wrap" style="padding:30px 18px 18px"><div class="store-logo" style="width:64px;height:64px;font-size:1.5rem">${esc(initials(d.name))}</div><div><h1 style="font-size:1.7rem">${esc(d.name)}</h1><div>${esc(d.tagline)}</div></div></div></section>${d.announcement ? `<div class="store-announce">${esc(d.announcement)}</div>` : ''}
-        <div class="layout-${esc(d.layout)}" style="padding:14px"><div class="grid">${Store.s.products.filter(p => p.shopId === shop.id).slice(0, d.layout === 'compact' ? 4 : d.layout === 'editorial' ? 2 : 3).map(p => productCard(p, { hideShop: true })).join('') || '<p class="muted">Your products will appear here.</p>'}</div></div></div>`;
+      prev.innerHTML = `<div style="--shop-c:${esc(d.color)}"><section class="store-hero"><img src="${esc(d.banner)}" alt=""></section>
+        <div class="store-head f-${esc(d.font)}"><div class="store-logo">${esc(initials(d.name))}</div><div><h1 style="font-size:1.3rem">${esc(d.name)}</h1><div class="muted">${esc(d.tagline)}</div></div></div>
+        <div style="padding:0 14px">${d.announcement ? `<div class="store-announce">${esc(d.announcement)}</div>` : ''}
+        <div class="layout-${esc(d.layout)}" style="margin-top:14px"><div class="grid">${Store.s.products.filter(p => p.shopId === shop.id).slice(0, d.layout === 'compact' ? 4 : d.layout === 'editorial' ? 2 : 3).map(p => productCard(p, { hideShop: true })).join('') || '<p class="muted">Your products will appear here.</p>'}</div></div></div></div>`;
       document.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', b.dataset.color === d.color));
       document.querySelectorAll('[data-banner]').forEach(b => b.classList.toggle('on', b.dataset.banner === d.banner));
     };
@@ -445,8 +447,8 @@ function shopOverview(shop, u, title) {
   const lowStock = prods.filter(p => p.active && p.stock > 0 && p.stock <= 2);
   const soldOut = prods.filter(p => p.active && p.stock <= 0);
   if (shop.status === 'published') {
-    chart('salesChart', lineCfg(s.labels, [{ label: 'Sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(36,81,74,.12)', fill: true }]));
-    chart('statusChart', doughnutCfg(ORDER_FLOW.map(x => STATUS_LABEL[x]), statusCounts, ['#E2B65A', '#5B8BD0', '#8C6BC9', '#3AA3AE', '#2F7A4B']));
+    chart('salesChart', lineCfg(s.labels, [{ label: 'Sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(123,28,28,.08)', fill: true }]));
+    chart('statusChart', doughnutCfg(ORDER_FLOW.map(x => STATUS_LABEL[x]), statusCounts, ['#E0A030', '#4A7BC0', '#8C6BC9', '#2E9AA6', '#1E7B34']));
   }
   return `${head(title || `Ayubowan, ${esc(u.name.split(' ')[0])}`, `${esc(shop.name)} · ${SHOP_STATUS_LABEL[shop.status]}`, shop.status === 'published' ? `<a class="btn btn-ghost" href="#/store/${shop.id}">${icon('eye')} View shop</a><button class="btn btn-brass" data-action="edit-product" data-id="">${icon('plus')} Add product</button>` : '')}
     ${shop.status !== 'published' ? `<div class="card" style="margin-bottom:16px"><h3>Your application</h3>${applicationPipeline(shop)}<p class="muted">While you wait, set up your <a href="#/dashboard/design" style="text-decoration:underline">shop design</a> and <a href="#/dashboard/products" style="text-decoration:underline">add products</a> so you are ready on day one.</p></div>` : ''}
@@ -576,7 +578,7 @@ DashViews.agent.overview = (q, u) => {
   const owed = Store.statements(ids).filter(x => !x.state.agentPaid).reduce((a, x) => a + x.agent, 0);
   const apps = shops.filter(x => x.status === 'pending_payment');
   const byShop = live.filter(x => !Store.isAgentShop(x)).map(x => ({ x, v: Store.commission(x, Store.shopStats(x.id).revenue).agent }));
-  chart('regionChart', lineCfg(s.labels, [{ label: 'Region sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(36,81,74,.12)', fill: true }, { label: `Your ${Store.s.settings.agentRate}%`, data: earn.data, borderColor: BRASS }]));
+  chart('regionChart', lineCfg(s.labels, [{ label: 'Region sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(123,28,28,.08)', fill: true }, { label: `Your ${Store.s.settings.agentRate}%`, data: earn.data, borderColor: BRASS }]));
   chart('agentShops', barCfg(byShop.map(b => b.x.name), byShop.map(b => b.v), BRASS, true));
   return `${head(`${esc(r.name)} region`, `You onboard and support shops in ${esc(r.name)}, and earn ${Store.s.settings.agentRate}% of their delivered sales. Your own shop pays only the ${Store.s.settings.platformRate}% platform share.`)}
     ${apps.length ? `<div class="notice"><b>${apps.length} application${apps.length > 1 ? 's' : ''} waiting for payment verification.</b> <a href="#/dashboard/applications" style="text-decoration:underline">Review now</a></div>` : ''}
@@ -676,9 +678,9 @@ DashViews.super.overview = () => {
   const p = dailySeries(os, 30, o => Store.commission(Store.shop(o.shopId), o.subtotal).platform);
   const shops = Store.publishedShops().map(x => ({ x, r: Store.shopStats(x.id).revenue })).sort((a, b) => b.r - a.r);
   const statusCounts = [...ORDER_FLOW, 'cancelled'].map(x => os.filter(o => o.status === x).length);
-  chart('gmvChart', lineCfg(s.labels, [{ label: 'Marketplace sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(36,81,74,.12)', fill: true }, { label: 'Platform 2%', data: p.data, borderColor: LACQ }]));
-  chart('splitChart', doughnutCfg(['Shops keep', 'Region agents', 'Platform'], [gmvAll - plat - agent, agent, plat], [PATINA, BRASS, LACQ]));
-  chart('statusBar', barCfg([...ORDER_FLOW, 'cancelled'].map(x => STATUS_LABEL[x]), statusCounts, ['#E2B65A', '#5B8BD0', '#8C6BC9', '#3AA3AE', '#2F7A4B', LACQ]));
+  chart('gmvChart', lineCfg(s.labels, [{ label: 'Marketplace sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(123,28,28,.08)', fill: true }, { label: 'Platform 2%', data: p.data, borderColor: LACQ }]));
+  chart('splitChart', doughnutCfg(['Shops keep', 'Region agents', 'Platform'], [gmvAll - plat - agent, agent, plat], ['#2E4A3A', BRASS, PATINA]));
+  chart('statusBar', barCfg([...ORDER_FLOW, 'cancelled'].map(x => STATUS_LABEL[x]), statusCounts, ['#E0A030', '#4A7BC0', '#8C6BC9', '#2E9AA6', '#1E7B34', LACQ]));
   chart('shopBar', barCfg(shops.map(b => b.x.name), shops.map(b => b.r), BRASS, true));
   const finals = Store.s.shops.filter(x => x.status === 'agent_approved');
   return `${head('Platform overview', 'Everything across every region, shop and order.')}

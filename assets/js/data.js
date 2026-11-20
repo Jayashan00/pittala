@@ -1,86 +1,107 @@
 /* Seed data for the Pittala.lk demo.
-   All photos are free-to-use images hosted on Pexels (pexels.com/license). */
+   Photos: only Sri Lankan images (Pexels free licence, pexels.com/license).
+   Items with no free photo available (karaduwa, kendiya, pettagama, heppuwa…) use
+   clean product renders from productArt(). Shops replace these with their own photos
+   from the dashboard (Products → Edit → Photos). */
 
-const PX = (id, w = 1000) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
+const PX = (id, w = 900) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
 
-const PHOTOS = {
-  lampSL: 9743110,        // brass oil lamp, Sri Lankan photographer
-  lampTemple: 36873193,   // lit brass lamp in a Sri Lankan temple
-  lampGlow: 16457616,     // decorative brass lamp with flames
-  lampFlowers: 5027991,   // brass oil lamp on tray, white flowers
-  lampIntricate: 34056592,
-  lampChain: 20122586,
-  lampWhite: 20122582,
-  lantern: 40242712,
-  bazaarLamps: 18724236,
-  lampTray: 34411109,
-  candleHolder: 8819218,
-  lampFlame: 8819140,
-  ceremony: 33853980,
-  ceremony2: 34899896,
-  buddha: 1585716,
-  figurines: 6998591,
-  artisan: 26792961,
-  relief: 32662216,
-  goldMarket: 15755947,
-  coinsTray: 14936593,
-  samovars: 33782035,
-  teapot: 31094854,
-  bell: 37531058,
-  candlesticks: 25461444,
-  metalStall: 14724142,
-  coffeePots: 9939082,
-  copperPots: 34638107,
-  marketBrass: 6808948,
-  ganesha: 12573352,
-  nataraja: 10899309,
-  souvenirs: 6062498,
-  artifacts: 30688201,
-  copperSilver: 18082510,
-  hookahGold: 20122616
+const SL_PHOTOS = {
+  lampKandy: 9743110,        // brass oil lamp, photographed in Kandy
+  lampDecor: 16457616,       // decorative brass lamp, Sri Lankan photographer
+  lampTemple: 36873193,      // lit brass lamp in a Sri Lankan temple
+  lampsBuddhist: 38194826,   // oil lamps in a Sri Lankan Buddhist temple
+  lampsTemple: 12321803,     // oil lamps burning in a Sri Lankan temple
+  lightingLamp: 36481272,    // hands lighting a lamp, Sri Lankan temple
+  buddhaBrass: 1585716,      // brass Buddha figurine
+  gadaladeniya: 29035392,    // Gadaladeniya temple, Pilimathalawa
+  daladaMaligawa: 38253196,  // Temple of the Tooth, Kandy
+  bahiravokanda: 33404365,   // Bahiravokanda Buddha, Kandy
+  offering: 38194824,        // flower offering at a Sri Lankan shrine
+  templeInterior: 2365974,   // temple interior, Panadura
+  templeFacade: 38194825     // temple facade, Peliyagoda
 };
-const P = Object.fromEntries(Object.entries(PHOTOS).map(([k, v]) => [k, PX(v)]));
-const HERO = id => PX(id, 1920);
+const P = Object.fromEntries(Object.entries(SL_PHOTOS).map(([k, v]) => [k, PX(v)]));
+const PW = Object.fromEntries(Object.entries(SL_PHOTOS).map(([k, v]) => [k, PX(v, 1600)]));
 
-/* Hero "film": each chapter is a full-bleed shot with slow motion.
-   To use real video, put an .mp4 URL (e.g. a Pexels video file link) in `video`. */
-const HERO_FILM = [
-  { img: HERO(PHOTOS.lampTemple), title: 'Lit', sub: 'Temple lamps of Kandy', video: '' },
-  { img: HERO(PHOTOS.artisan), title: 'Cast', sub: 'Poured by hand', video: '' },
-  { img: HERO(PHOTOS.bazaarLamps), title: 'Chased', sub: 'Patterns hammered in', video: '' },
-  { img: HERO(PHOTOS.lampGlow), title: 'Polished', sub: 'Brought to a mirror shine', video: '' }
+/* ---------- Product renders (studio-style) for items without a free photo ---------- */
+function productArt(type, tone = 'brass') {
+  const tones = {
+    brass: ['#5E420F', '#B8862B', '#F3DD9B', '#C79A3A', '#5E420F'],
+    gold: ['#7A5A12', '#E2B53F', '#FFF1B8', '#E0B13A', '#7A5A12'],
+    antique: ['#2E2412', '#6F5524', '#B89A5A', '#6B5122', '#2E2412']
+  }[tone];
+  const shapes = {
+    karaduwa: `<rect x="120" y="318" width="160" height="18" rx="3" fill="url(#m)"/><rect x="134" y="300" width="132" height="20" rx="3" fill="url(#m)"/>
+      <path d="M140 302 C140 214 260 214 260 302 Z" fill="url(#m)"/><rect x="176" y="222" width="48" height="18" rx="2" fill="url(#m)"/>
+      <path d="M182 224 L218 224 L204 112 L196 112 Z" fill="url(#m)"/>${[206, 190, 174, 158, 142, 126].map((y, i) => `<rect x="${184 + i * 2.2}" y="${y}" width="${32 - i * 4.4}" height="5" rx="2" fill="url(#m)"/>`).join('')}
+      <circle cx="200" cy="105" r="8" fill="url(#m)"/><path d="M150 268 Q200 252 250 268" stroke="#5E420F" stroke-width="2" fill="none" opacity=".5"/>`,
+    kendiya: `<ellipse cx="200" cy="330" rx="42" ry="8" fill="url(#m)"/><circle cx="200" cy="255" r="78" fill="url(#m)"/>
+      <rect x="184" y="150" width="32" height="40" fill="url(#m)"/><ellipse cx="200" cy="150" rx="30" ry="9" fill="url(#m)"/>
+      <path d="M262 236 L322 168 L332 176 L276 248 Z" fill="url(#m)"/><ellipse cx="327" cy="171" rx="8" ry="4" fill="#3B2A0A"/>
+      <path d="M140 250 Q200 230 260 250" stroke="#5E420F" stroke-width="2" fill="none" opacity=".45"/><path d="M135 270 Q200 252 265 270" stroke="#5E420F" stroke-width="2" fill="none" opacity=".45"/>`,
+    pettagama: `<rect x="105" y="196" width="190" height="110" rx="6" fill="url(#m)"/><path d="M105 200 Q105 150 200 146 Q295 150 295 200 Z" fill="url(#m)"/>
+      <rect x="112" y="304" width="18" height="22" fill="url(#m)"/><rect x="270" y="304" width="18" height="22" fill="url(#m)"/>
+      <rect x="140" y="148" width="10" height="158" fill="#5E420F" opacity=".35"/><rect x="250" y="148" width="10" height="158" fill="#5E420F" opacity=".35"/>
+      <circle cx="200" cy="232" r="16" fill="url(#m)" stroke="#5E420F" stroke-width="2"/><rect x="197" y="230" width="6" height="12" fill="#3B2A0A"/>`,
+    heppuwa: `<ellipse cx="200" cy="330" rx="62" ry="12" fill="url(#m)"/><path d="M186 216 L214 216 L222 322 L178 322 Z" fill="url(#m)"/>
+      <ellipse cx="200" cy="250" rx="22" ry="8" fill="url(#m)"/><path d="M92 176 Q200 262 308 176 Z" fill="url(#m)"/>
+      <ellipse cx="200" cy="176" rx="108" ry="18" fill="url(#m)" stroke="#5E420F" stroke-width="1.5"/>`,
+    paththara: `<ellipse cx="200" cy="322" rx="70" ry="12" fill="url(#m)"/><path d="M110 214 Q110 318 200 318 Q290 318 290 214 Z" fill="url(#m)"/>
+      <path d="M118 212 Q200 132 282 212 Z" fill="url(#m)"/><ellipse cx="200" cy="212" rx="86" ry="10" fill="url(#m)" stroke="#5E420F" stroke-width="1.5"/>
+      <path d="M190 150 Q200 118 210 150 Z" fill="url(#m)"/>`,
+    punkalasa: `<ellipse cx="200" cy="330" rx="46" ry="9" fill="url(#m)"/><path d="M130 250 Q130 326 200 326 Q270 326 270 250 Q270 196 222 186 L178 186 Q130 196 130 250 Z" fill="url(#m)"/>
+      <ellipse cx="200" cy="184" rx="40" ry="10" fill="url(#m)"/>${[-60, -38, -18, 0, 18, 38, 60].map(a => `<path d="M200 182 Q${200 + a * 1.2} ${120 + Math.abs(a) * .6} ${200 + a * 1.9} ${92 + Math.abs(a) * 1.3}" stroke="url(#m)" stroke-width="9" stroke-linecap="round" fill="none"/>`).join('')}
+      <circle cx="200" cy="168" r="16" fill="url(#m)"/>`,
+    bell: `<path d="M140 300 Q140 186 200 180 Q260 186 260 300 Z" fill="url(#m)"/><ellipse cx="200" cy="300" rx="66" ry="12" fill="url(#m)" stroke="#5E420F" stroke-width="1.5"/>
+      <rect x="192" y="140" width="16" height="42" fill="url(#m)"/><path d="M200 92 Q226 120 200 146 Q174 120 200 92 Z" fill="url(#m)"/><circle cx="200" cy="318" r="9" fill="url(#m)"/>`
+  };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6E3DE"/></radialGradient>
+    <linearGradient id="m" x1="0" x2="1">${tones.map((c, i) => `<stop offset="${i / (tones.length - 1)}" stop-color="${c}"/>`).join('')}</linearGradient>
+    <radialGradient id="sh"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+    <rect width="400" height="400" fill="url(#bg)"/><ellipse cx="200" cy="340" rx="130" ry="16" fill="url(#sh)"/>${shapes[type]}</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+const ART = {
+  karaduwaGold: productArt('karaduwa', 'gold'), karaduwa: productArt('karaduwa'), karaduwaAntique: productArt('karaduwa', 'antique'),
+  kendiya: productArt('kendiya'), kendiyaAntique: productArt('kendiya', 'antique'),
+  pettagama: productArt('pettagama'), pettagamaAntique: productArt('pettagama', 'antique'),
+  heppuwa: productArt('heppuwa'), heppuwaGold: productArt('heppuwa', 'gold'),
+  paththara: productArt('paththara'), punkalasa: productArt('punkalasa', 'gold'), bell: productArt('bell')
+};
+
+/* ---------- Home page banners ---------- */
+const HERO_SLIDES = [
+  { img: PW.lampKandy, bg: '#7B1C1C', kicker: 'Oil lamps · පහන්', title: 'Hand-cast pahan from Pilimathalawa', text: 'Standing, hanging and table lamps made by family workshops near Kandy. Up to 20% off this week.', cta: 'Shop oil lamps', href: '#/shop?cat=oil-lamps' },
+  { img: PW.offering, bg: '#1F3A5F', kicker: 'Pooja & temple', title: 'Everything for the shrine room', text: 'Heppuwa, paththara, punkalasa, karaduwa and Buddha statues, direct from the makers.', cta: 'Shop pooja items', href: '#/shop?cat=pooja' },
+  { img: PW.gadaladeniya, bg: '#3A2E1A', kicker: 'From the brass village', title: 'Buy direct from Pilimathalawa', text: 'Every order goes straight to the workshop that made it. Pay in cash when it reaches your door.', cta: 'Browse the shops', href: '#/stores' },
+  { img: PW.lightingLamp, bg: '#2E4A3A', kicker: 'For brass workshops', title: 'Open your shop on Pittala', text: 'List your products, run deals and take cash-on-delivery orders from all over Sri Lanka.', cta: 'Start selling', href: '#/sell' }
 ];
 
 const CATEGORIES = [
-  { id: 'oil-lamps', name: 'Oil lamps', si: 'පහන්', img: P.lampSL },
-  { id: 'hanging', name: 'Hanging lamps', si: 'එල්ලෙන පහන්', img: P.lantern },
-  { id: 'statues', name: 'Statues & figurines', si: 'පිළිම', img: P.buddha },
-  { id: 'pooja', name: 'Pooja & temple', si: 'පූජා භාණ්ඩ', img: P.bell },
-  { id: 'decor', name: 'Home décor', si: 'නිවාස අලංකරණ', img: P.candlesticks },
-  { id: 'kitchen', name: 'Kitchen & dining', si: 'මුළුතැන්ගෙය', img: P.teapot },
-  { id: 'wall-art', name: 'Wall art', si: 'බිත්ති කලා', img: P.relief },
-  { id: 'gifts', name: 'Gifts & souvenirs', si: 'තෑගි', img: P.coinsTray }
+  { id: 'oil-lamps', name: 'Oil lamps', si: 'පහන්', img: P.lampKandy },
+  { id: 'buddha', name: 'Buddha statues', si: 'බුද්ධ ප්‍රතිමා', img: P.buddhaBrass },
+  { id: 'karaduwa', name: 'Karaduwa & caskets', si: 'කරඬු', img: ART.karaduwaGold },
+  { id: 'pooja', name: 'Pooja & temple items', si: 'පූජා භාණ්ඩ', img: P.lampsBuddhist },
+  { id: 'kendiya', name: 'Kendiya & tableware', si: 'කෙණ්ඩිය', img: ART.kendiya },
+  { id: 'pettagama', name: 'Pettagama & boxes', si: 'පෙට්ටගම', img: ART.pettagama },
+  { id: 'gifts', name: 'Gifts & souvenirs', si: 'තෑගි', img: P.lampDecor }
 ];
 
 const DISTRICTS = ['Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'];
 
-const BANNERS = [P.bazaarLamps, P.goldMarket, P.metalStall, P.lampTemple, P.samovars, P.ceremony, P.marketBrass, P.artifacts, P.souvenirs, P.copperPots];
-const THEME_COLORS = ['#16332F', '#7A2418', '#5B4413', '#1F3A5F', '#3B2A4A', '#2B2B2B', '#2E5A3C', '#8C4A12'];
+const BANNERS = [PW.gadaladeniya, PW.daladaMaligawa, PW.lampsTemple, PW.offering, PW.templeInterior, PW.templeFacade, PW.bahiravokanda, PW.lampsBuddhist];
+const THEME_COLORS = ['#7B1C1C', '#1F3A5F', '#3A2E1A', '#2E4A3A', '#4A2C4F', '#2B2B2B', '#8C4A12', '#0F5257'];
 
 function buildSeed() {
   const now = Date.now();
   const H = 3600e3, D = 24 * H;
 
   const settings = {
-    platformName: 'Pittala.lk',
-    platformRate: 2,   // % to platform (super admin)
-    agentRate: 10,     // % to region agent
-    regFee: 5000,      // one-time shop registration fee (LKR), paid to the region agent
-    deliveryKandy: 400,
-    deliveryOther: 650,
-    freeDeliveryOver: 25000,
-    supportEmail: 'hello@pittala.lk',
-    supportPhone: '0771234567'
+    platformName: 'Pittala.lk', platformRate: 2, agentRate: 10, regFee: 5000,
+    deliveryKandy: 400, deliveryOther: 650, freeDeliveryOver: 25000,
+    supportEmail: 'hello@pittala.lk', supportPhone: '0771234567'
   };
 
   const regions = [
@@ -97,124 +118,108 @@ function buildSeed() {
     { id: 'u6', role: 'owner', name: 'Chaminda Rathnayake', email: 'chaminda@pittala.lk', password: 'shop123', phone: '0706789012', shopId: 's5' },
     { id: 'u7', role: 'owner', name: 'Ruwan Senanayake', email: 'ruwan@pittala.lk', password: 'shop123', phone: '0778901234', shopId: 's6' },
     { id: 'u8', role: 'owner', name: 'Dilani Perera', email: 'dilani@pittala.lk', password: 'shop123', phone: '0719012345', shopId: 's7' },
-    { id: 'u9', role: 'customer', name: 'Ishara Fernando', email: 'ishara@gmail.com', password: 'buyer123', phone: '0771112233' }
+    { id: 'u9', role: 'customer', name: 'Ishara Fernando', email: 'ishara@gmail.com', password: 'buyer123', phone: '0771112233', createdAt: now - 40 * D }
   ];
 
   const signed = (name, rate, at) => ({ signedName: name, rate, signedAt: at, version: '2026.1' });
+  const shop = (o) => ({ layout: 'classic', font: 'engraved', announcement: '', hours: 'Mon–Sat, 8.30 am – 5.30 pm', designed: true, ...o });
 
   const shops = [
-    { id: 's1', name: 'Kandyan Brass House', ownerId: 'u2', regionId: 'r1', status: 'published', color: '#16332F', banner: P.bazaarLamps,
-      tagline: 'Temple-grade oil lamps since 1962', story: 'Three generations of the Herath family have cast pahana and hanging lamps for devales across the hill country. Every lamp is sand-cast, chased by hand and polished on our own wheel in Pilimathalawa.',
-      phone: '0772345678', whatsapp: '0772345678', email: 'agent@pittala.lk', address: 'No. 41, Kandy Road, Pilimathalawa', est: 1962, artisans: 14, hours: 'Mon–Sat, 8.00 am – 6.00 pm',
-      layout: 'classic', font: 'engraved', announcement: 'Free delivery in Kandy district this week', rating: 4.9, createdAt: now - 400 * D,
-      agreement: signed('K. B. Herath', 2, now - 400 * D), payment: { ref: 'AGENT-SELF', amount: 0, at: now - 400 * D }, approvals: { agentAt: now - 400 * D, adminAt: now - 399 * D } },
-    { id: 's2', name: 'Siri Pittala Works', ownerId: 'u3', regionId: 'r1', status: 'published', color: '#7A2418', banner: P.goldMarket,
-      tagline: 'Statues cast in the old Kandyan style', story: 'Sirisena learned lost-wax casting from his uncle at the age of twelve. The workshop specialises in seated and standing Buddha statues, elephants and devotional figures.',
-      phone: '0713456789', whatsapp: '0713456789', email: 'siri@pittala.lk', address: 'Galagedara Road, Pilimathalawa', est: 1988, artisans: 8, hours: 'Daily, 9.00 am – 5.30 pm',
-      layout: 'editorial', font: 'engraved', announcement: 'Vesak pre-orders now open', rating: 4.8, createdAt: now - 300 * D,
-      agreement: signed('S. Wickramasinghe', 12, now - 300 * D), payment: { ref: 'BOC-882134', amount: 5000, at: now - 299 * D }, approvals: { agentAt: now - 299 * D, adminAt: now - 298 * D } },
-    { id: 's3', name: 'Lakmini Brass Craft', ownerId: 'u4', regionId: 'r1', status: 'published', color: '#5B4413', banner: P.metalStall,
-      tagline: 'Small pieces, big character', story: 'A women-led studio making trays, bowls, betel sets and gift pieces. We work with six home-based artisans from the village and pay them per piece, above market rate.',
-      phone: '0754567890', whatsapp: '0754567890', email: 'lakmini@pittala.lk', address: 'Temple Road, Pilimathalawa', est: 2009, artisans: 6, hours: 'Mon–Fri, 9.00 am – 5.00 pm',
-      layout: 'compact', font: 'modern', announcement: '', rating: 4.7, createdAt: now - 220 * D,
-      agreement: signed('L. Jayawardena', 12, now - 220 * D), payment: { ref: 'HNB-551920', amount: 5000, at: now - 219 * D }, approvals: { agentAt: now - 219 * D, adminAt: now - 218 * D } },
-    { id: 's4', name: 'Dalada Metal Arts', ownerId: 'u5', regionId: 'r1', status: 'published', color: '#1F3A5F', banner: P.lampTemple,
-      tagline: 'Pooja sets and temple bells', story: 'We supply bells, pooja trays and offering lamps to temples and kovils across the island, and now to homes through Pittala.',
-      phone: '0765678901', whatsapp: '0765678901', email: 'nimal@pittala.lk', address: 'Kadugannawa Road, Pilimathalawa', est: 1995, artisans: 10, hours: 'Mon–Sat, 8.30 am – 5.30 pm',
-      layout: 'classic', font: 'engraved', announcement: '', rating: 4.6, createdAt: now - 150 * D,
-      agreement: signed('N. Dissanayake', 12, now - 150 * D), payment: { ref: 'COM-773201', amount: 5000, at: now - 149 * D }, approvals: { agentAt: now - 149 * D, adminAt: now - 148 * D } },
-    { id: 's5', name: 'Hill Country Brassware', ownerId: 'u6', regionId: 'r1', status: 'published', color: '#2E5A3C', banner: P.samovars,
-      tagline: 'Kitchen brass for everyday use', story: 'Kettles, kendi pitchers, rice pots and serving ware that you can actually cook and serve with. Tin-lined where it matters.',
-      phone: '0706789012', whatsapp: '0706789012', email: 'chaminda@pittala.lk', address: 'Pilimathalawa Junction', est: 2014, artisans: 5, hours: 'Daily, 8.00 am – 7.00 pm',
-      layout: 'classic', font: 'modern', announcement: 'Buy 2 kitchen pieces, get 5% off with code HILL5', rating: 4.5, createdAt: now - 90 * D,
-      agreement: signed('C. Rathnayake', 12, now - 90 * D), payment: { ref: 'SAM-110293', amount: 5000, at: now - 89 * D }, approvals: { agentAt: now - 89 * D, adminAt: now - 88 * D } },
-    // Applications in the pipeline
-    { id: 's6', name: 'Senanayake Brass Foundry', ownerId: 'u7', regionId: 'r1', status: 'pending_payment', color: '#8C4A12', banner: P.artifacts,
-      tagline: 'Large castings to order', story: 'Foundry work for doors, handles, temple fittings and large statues.', phone: '0778901234', whatsapp: '0778901234', email: 'ruwan@pittala.lk',
-      address: 'Hantana Estate Road, Pilimathalawa', est: 2001, artisans: 9, hours: 'Mon–Sat', layout: 'classic', font: 'engraved', announcement: '', rating: 0, createdAt: now - 2 * D,
-      agreement: signed('R. Senanayake', 12, now - 2 * D), payment: { ref: 'BOC-993012', amount: 5000, at: now - 2 * D, slip: '' }, approvals: {} },
-    { id: 's7', name: 'Dilani Gift Studio', ownerId: 'u8', regionId: 'r1', status: 'agent_approved', color: '#3B2A4A', banner: P.souvenirs,
-      tagline: 'Corporate gifts and wedding favours', story: 'Engraved brass keepsakes for weddings and corporate events.', phone: '0719012345', whatsapp: '0719012345', email: 'dilani@pittala.lk',
-      address: 'Peradeniya Road, Pilimathalawa', est: 2018, artisans: 3, hours: 'Mon–Fri', layout: 'compact', font: 'modern', announcement: '', rating: 0, createdAt: now - 5 * D,
-      agreement: signed('D. Perera', 12, now - 5 * D), payment: { ref: 'HNB-400128', amount: 5000, at: now - 4 * D, slip: '' }, approvals: { agentAt: now - 3 * D } }
+    shop({ id: 's1', name: 'Kandyan Brass House', ownerId: 'u2', regionId: 'r1', status: 'published', color: '#7B1C1C', banner: PW.gadaladeniya,
+      tagline: 'Temple-grade pahan since 1962', story: 'Three generations of the Herath family have cast pahan and hanging lamps for viharas and devales across the hill country. Every lamp is sand-cast, chased by hand and polished in our workshop on Kandy Road.',
+      phone: '0772345678', whatsapp: '0772345678', email: 'agent@pittala.lk', address: 'No. 41, Kandy Road, Pilimathalawa', est: 1962, artisans: 14,
+      announcement: 'Free delivery in Kandy district this week', rating: 4.9, createdAt: now - 400 * D,
+      agreement: signed('K. B. Herath', 2, now - 400 * D), payment: { ref: 'AGENT-SELF', amount: 0, at: now - 400 * D }, approvals: { agentAt: now - 400 * D, adminAt: now - 399 * D } }),
+    shop({ id: 's2', name: 'Siri Pittala Works', ownerId: 'u3', regionId: 'r1', status: 'published', color: '#3A2E1A', banner: PW.daladaMaligawa,
+      tagline: 'Buddha statues and karaduwa', story: 'Sirisena learned casting from his uncle at the age of twelve. The workshop makes seated Buddha statues, karaduwa and manjusawa for temples and homes.',
+      phone: '0713456789', whatsapp: '0713456789', email: 'siri@pittala.lk', address: 'Galagedara Road, Pilimathalawa', est: 1988, artisans: 8,
+      announcement: 'Vesak orders now open — order by 30 April', rating: 4.8, createdAt: now - 300 * D,
+      agreement: signed('S. Wickramasinghe', 12, now - 300 * D), payment: { ref: 'BOC-882134', amount: 5000, at: now - 299 * D }, approvals: { agentAt: now - 299 * D, adminAt: now - 298 * D } }),
+    shop({ id: 's3', name: 'Lakmini Brass Craft', ownerId: 'u4', regionId: 'r1', status: 'published', color: '#4A2C4F', banner: PW.templeInterior,
+      tagline: 'Pettagama, gifts and keepsakes', story: 'A women-led workshop making pettagama, small karaduwa and gift pieces with six home-based artisans from the village.',
+      phone: '0754567890', whatsapp: '0754567890', email: 'lakmini@pittala.lk', address: 'Temple Road, Pilimathalawa', est: 2009, artisans: 6, layout: 'compact', font: 'modern',
+      rating: 4.7, createdAt: now - 220 * D,
+      agreement: signed('L. Jayawardena', 12, now - 220 * D), payment: { ref: 'HNB-551920', amount: 5000, at: now - 219 * D }, approvals: { agentAt: now - 219 * D, adminAt: now - 218 * D } }),
+    shop({ id: 's4', name: 'Dalada Pooja Bhanda', ownerId: 'u5', regionId: 'r1', status: 'published', color: '#1F3A5F', banner: PW.lampsTemple,
+      tagline: 'Pooja items for viharas and homes', story: 'Heppuwa, paththara, bells and offering lamps supplied to temples across the island, and now to homes through Pittala.',
+      phone: '0765678901', whatsapp: '0765678901', email: 'nimal@pittala.lk', address: 'Kadugannawa Road, Pilimathalawa', est: 1995, artisans: 10,
+      rating: 4.6, createdAt: now - 150 * D,
+      agreement: signed('N. Dissanayake', 12, now - 150 * D), payment: { ref: 'COM-773201', amount: 5000, at: now - 149 * D }, approvals: { agentAt: now - 149 * D, adminAt: now - 148 * D } }),
+    shop({ id: 's5', name: 'Udarata Kendiya Works', ownerId: 'u6', regionId: 'r1', status: 'published', color: '#2E4A3A', banner: PW.templeFacade,
+      tagline: 'Kendiya and traditional tableware', story: 'Kendiya, water pots and serving ware in the old udarata style, made to be used every day.',
+      phone: '0706789012', whatsapp: '0706789012', email: 'chaminda@pittala.lk', address: 'Pilimathalawa Junction', est: 2014, artisans: 5, font: 'modern',
+      announcement: 'Use code UDA5 for 5% off orders over Rs. 10,000', rating: 4.5, createdAt: now - 90 * D,
+      agreement: signed('C. Rathnayake', 12, now - 90 * D), payment: { ref: 'SAM-110293', amount: 5000, at: now - 89 * D }, approvals: { agentAt: now - 89 * D, adminAt: now - 88 * D } }),
+    shop({ id: 's6', name: 'Senanayake Brass Foundry', ownerId: 'u7', regionId: 'r1', status: 'pending_payment', color: '#8C4A12', banner: PW.bahiravokanda,
+      tagline: 'Large castings to order', story: 'Foundry work for temple fittings and large statues.', phone: '0778901234', whatsapp: '0778901234', email: 'ruwan@pittala.lk',
+      address: 'Hantana Estate Road, Pilimathalawa', est: 2001, artisans: 9, rating: 0, createdAt: now - 2 * D, designed: false,
+      agreement: signed('R. Senanayake', 12, now - 2 * D), payment: { ref: 'BOC-993012', amount: 5000, at: now - 2 * D, slip: '' }, approvals: {} }),
+    shop({ id: 's7', name: 'Dilani Gift Studio', ownerId: 'u8', regionId: 'r1', status: 'agent_approved', color: '#0F5257', banner: PW.lampsBuddhist,
+      tagline: 'Wedding and corporate brass gifts', story: 'Engraved brass keepsakes for weddings and corporate events.', phone: '0719012345', whatsapp: '0719012345', email: 'dilani@pittala.lk',
+      address: 'Peradeniya Road, Pilimathalawa', est: 2018, artisans: 3, rating: 0, createdAt: now - 5 * D, designed: false,
+      agreement: signed('D. Perera', 12, now - 5 * D), payment: { ref: 'HNB-400128', amount: 5000, at: now - 4 * D, slip: '' }, approvals: { agentAt: now - 3 * D } })
   ];
 
   const mk = (id, shopId, name, category, price, opts = {}) => ({
     id, shopId, name, category, price,
-    discount: opts.discount || 0,
-    dealEnds: opts.dealHours ? now + opts.dealHours * H : null,
-    demoDealHours: opts.dealHours || 0,
-    stock: opts.stock ?? 10,
-    images: opts.images,
-    description: opts.desc || '',
-    material: opts.material || 'Solid brass',
-    dimensions: opts.dim || '',
-    weight: opts.weight || '',
-    finish: opts.finish || 'Hand-polished',
-    badge: opts.badge || '',
-    sold: opts.sold || 0,
-    views: opts.views || Math.round(80 + Math.random() * 900),
-    rating: opts.rating || 4.6,
-    reviews: opts.reviews || 0,
-    createdAt: now - (opts.age || 30) * D,
-    active: true,
-    spotlight: !!opts.spotlight
+    discount: opts.discount || 0, dealEnds: opts.dealHours ? now + opts.dealHours * H : null, demoDealHours: opts.dealHours || 0,
+    stock: opts.stock ?? 10, images: opts.images, description: opts.desc || '',
+    material: opts.material || 'Solid brass', dimensions: opts.dim || '', weight: opts.weight || '', finish: opts.finish || 'Natural brass, hand-polished',
+    badge: opts.badge || '', sold: opts.sold || 0, views: opts.views || Math.round(80 + Math.random() * 900),
+    rating: opts.rating || 4.6, reviews: opts.reviews || 0, createdAt: now - (opts.age || 30) * D, active: true, spotlight: !!opts.spotlight, demoDealHours2: 0
   });
 
   const products = [
-    // s1 Kandyan Brass House (agent's shop)
-    mk('p1', 's1', 'Traditional Pahana — 5 wick standing lamp', 'oil-lamps', 18500, { discount: 15, dealHours: 30, stock: 6, images: [P.lampSL, P.lampIntricate, P.lampFlame], badge: 'Bestseller', sold: 64, rating: 4.9, reviews: 38, dim: 'H 46 cm, base 14 cm', weight: '2.4 kg', desc: 'The lamp lit at every Sri Lankan auspicious moment. Five wick spouts on a tiered stand, sand-cast in one piece and finished by hand. Comes with a cotton-wick starter pack.', spotlight: true }),
-    mk('p2', 's1', 'Devale hanging lamp with chain', 'hanging', 24500, { stock: 3, images: [P.lantern, P.lampChain], badge: 'Handmade', sold: 22, rating: 4.8, reviews: 14, dim: 'Bowl 22 cm, chain 90 cm', weight: '3.1 kg', desc: 'A seven-spout hanging lamp of the kind used in devales, with a hand-forged chain and peacock finial.' }),
-    mk('p3', 's1', 'Pahana — compact table lamp', 'oil-lamps', 6800, { discount: 10, stock: 0, images: [P.lampGlow, P.lampTray], sold: 120, rating: 4.7, reviews: 51, dim: 'H 22 cm', weight: '0.9 kg', desc: 'Our smallest pahana, sized for apartment shrines and office openings.' }),
-    mk('p4', 's1', 'Wedding Magul Pahana (pair)', 'oil-lamps', 42000, { stock: 2, images: [P.lampIntricate, P.ceremony2], badge: 'Made to order', sold: 9, rating: 5, reviews: 6, dim: 'H 120 cm each', weight: '11 kg each', desc: 'A matched pair of tall ceremonial lamps for poruwa ceremonies and inaugurations. Seven-day lead time.' }),
-    mk('p5', 's1', 'Brass offering lamp on tray', 'pooja', 4200, { discount: 20, dealHours: 9, stock: 15, images: [P.lampFlowers, P.lampTray], sold: 41, rating: 4.6, reviews: 19, dim: 'Tray 18 cm', desc: 'A single-wick lamp seated on a scalloped tray to catch oil and flower petals.' }),
+    // Kandyan Brass House — oil lamps (region agent's own shop)
+    mk('p1', 's1', 'Traditional Pahana — 5 wick standing oil lamp, 18 inch', 'oil-lamps', 18500, { discount: 15, dealHours: 30, stock: 6, images: [P.lampKandy, P.lampDecor], badge: 'Bestseller', sold: 64, rating: 4.9, reviews: 38, dim: 'H 46 cm, base 14 cm', weight: '2.4 kg', desc: 'The lamp lit at every auspicious moment in a Sri Lankan home. Five wick spouts on a tiered stand, sand-cast in one piece and finished by hand. Ideal for Avurudu, weddings, office openings and the shrine room.', spotlight: true }),
+    mk('p2', 's1', 'Kukula Pahana — ceremonial lamp, 5 feet', 'oil-lamps', 68000, { stock: 2, images: [P.lampTemple, P.lampKandy], badge: 'Made to order', sold: 9, rating: 5, reviews: 6, dim: 'H 152 cm', weight: '14 kg', desc: 'The tall rooster-topped ceremonial lamp used at inaugurations, weddings and national events. Seven working days to make.' }),
+    mk('p3', 's1', 'Table Pahana — compact 9 inch', 'oil-lamps', 6800, { discount: 10, stock: 0, images: [P.lampDecor, P.lampKandy], sold: 120, rating: 4.7, reviews: 51, dim: 'H 22 cm', weight: '0.9 kg', desc: 'Our smallest standing pahana, sized for apartment shrine rooms and office desks.' }),
+    mk('p4', 's1', 'Pol Thel Pahana — hanging lamp with chain', 'oil-lamps', 24500, { stock: 3, images: [P.lampTemple, P.lampsTemple], badge: 'Handmade', sold: 22, rating: 4.8, reviews: 14, dim: 'Bowl 22 cm, chain 90 cm', weight: '3.1 kg', desc: 'A seven-wick hanging lamp of the kind seen in viharas and walauwas, with a hand-forged chain.' }),
 
-    // s2 Siri Pittala Works — statues
-    mk('p6', 's2', 'Seated Buddha — Samadhi, antique finish', 'statues', 32500, { discount: 12, dealHours: 50, stock: 4, images: [P.buddha, P.figurines], badge: 'Bestseller', sold: 33, rating: 4.9, reviews: 27, dim: 'H 30 cm', weight: '3.6 kg', finish: 'Antique patina', desc: 'Lost-wax cast Buddha in the Samadhi posture with a dark antique finish that deepens over time.', spotlight: true }),
-    mk('p7', 's2', 'Tibetan-style figurine set (3)', 'statues', 14800, { stock: 0, images: [P.figurines, P.buddha], sold: 18, rating: 4.7, reviews: 9, dim: 'H 9–12 cm', desc: 'A set of three small devotional figurines for a desk or shrine shelf.' }),
-    mk('p8', 's2', 'Ganesha with lotus base', 'statues', 12900, { stock: 7, images: [P.ganesha], sold: 21, rating: 4.8, reviews: 11, dim: 'H 18 cm', desc: 'Seated Ganesha on a double lotus base, hand-chased details.' }),
-    mk('p9', 's2', 'Nataraja — dancing figure', 'statues', 38500, { discount: 8, stock: 2, images: [P.nataraja], badge: 'Masterpiece', sold: 6, rating: 5, reviews: 4, dim: 'H 42 cm', weight: '5.2 kg', desc: 'A large dancing figure within a ring of flames. Cast in three parts and joined by hand.' }),
-    mk('p10', 's2', 'Kandyan wall relief panel', 'wall-art', 27000, { stock: 5, images: [P.relief], sold: 12, rating: 4.7, reviews: 8, dim: '60 × 40 cm', desc: 'Liyawela (vine) and hamsa (swan) motifs beaten in relief on a single brass sheet, mounted on teak.' }),
+    // Siri Pittala Works — Buddha statues & karaduwa
+    mk('p5', 's2', 'Samadhi Buddha statue — antique finish, 12 inch', 'buddha', 32500, { discount: 12, dealHours: 50, stock: 4, images: [P.buddhaBrass], badge: 'Bestseller', sold: 33, rating: 4.9, reviews: 27, dim: 'H 30 cm', weight: '3.6 kg', finish: 'Antique patina', desc: 'Seated Buddha in the Samadhi posture, cast in brass with a dark antique finish that deepens over time.', spotlight: true }),
+    mk('p6', 's2', 'Samadhi Buddha statue — gold plated, 8 inch', 'buddha', 21500, { stock: 6, images: [P.buddhaBrass], sold: 19, rating: 4.8, reviews: 12, dim: 'H 20 cm', finish: 'Gold plated', desc: 'A smaller seated Buddha with a bright gold-plated finish for the home shrine.' }),
+    mk('p7', 's2', 'Gold plated Karaduwa with chains — 3 feet', 'karaduwa', 145000, { discount: 8, stock: 1, images: [ART.karaduwaGold, ART.karaduwa], badge: 'Masterpiece', sold: 4, rating: 5, reviews: 3, dim: 'H 91 cm', weight: '9 kg', finish: 'Gold plated', desc: 'A dagoba-shaped relic casket with chuda manikya, decorative chains and lens ornament. Made to order for temples and home shrines.' }),
+    mk('p8', 's2', 'Brass Karaduwa — 12 inch', 'karaduwa', 28500, { stock: 5, images: [ART.karaduwa, ART.karaduwaGold], sold: 16, rating: 4.8, reviews: 9, dim: 'H 30 cm', desc: 'A table-size karaduwa in natural brass for the home shrine room.' }),
+    mk('p9', 's2', 'Manjusawa relic box — antique finish', 'pettagama', 18900, { stock: 3, images: [ART.pettagamaAntique], sold: 7, rating: 4.7, reviews: 4, dim: '20 × 14 × 16 cm', finish: 'Antique patina', desc: 'A small domed relic box with hinged lid and lock plate.' }),
 
-    // s3 Lakmini Brass Craft — gifts/decor
-    mk('p11', 's3', 'Antique coin & keepsake tray', 'gifts', 5400, { discount: 25, dealHours: 18, stock: 12, images: [P.coinsTray], sold: 58, rating: 4.6, reviews: 22, dim: '28 cm', desc: 'A hand-hammered tray that works for keys, jewellery or a betel set.' }),
-    mk('p12', 's3', 'Candlestick trio', 'decor', 9200, { stock: 1, images: [P.candlesticks], badge: 'New', sold: 14, rating: 4.5, reviews: 7, dim: 'H 18, 24, 30 cm', desc: 'Three turned candlesticks in graduated heights.', age: 4 }),
-    mk('p13', 's3', 'Temple bell with lotus handle', 'pooja', 3900, { discount: 10, stock: 20, images: [P.bell], sold: 77, rating: 4.7, reviews: 30, dim: 'H 16 cm', desc: 'Clear, long-ringing bell with a lotus-bud handle.' }),
-    mk('p14', 's3', 'Bazaar gift box — 5 mini pieces', 'gifts', 7600, { stock: 9, images: [P.marketBrass, P.souvenirs], sold: 25, rating: 4.4, reviews: 10, desc: 'Five small brass pieces in a printed gift box — a good souvenir for visitors.' }),
+    // Lakmini Brass Craft — pettagama, gifts, small karaduwa
+    mk('p10', 's3', 'Brass Pettagama jewellery chest', 'pettagama', 16500, { discount: 20, dealHours: 18, stock: 8, images: [ART.pettagama, ART.pettagamaAntique], badge: 'New', sold: 21, rating: 4.6, reviews: 11, dim: '24 × 16 × 18 cm', desc: 'A miniature of the traditional pettagama chest, with brass straps and a working lock. A lovely wedding gift.', age: 5 }),
+    mk('p11', 's3', 'Mini Karaduwa keepsake — 6 inch', 'gifts', 6900, { stock: 14, images: [ART.karaduwaGold], sold: 46, rating: 4.7, reviews: 18, dim: 'H 15 cm', finish: 'Gold plated', desc: 'A small gold-plated karaduwa, popular as a Vesak or Poson gift.' }),
+    mk('p12', 's3', 'Mini Pahana gift set with wicks', 'gifts', 4900, { discount: 10, stock: 2, images: [P.lampDecor], sold: 58, rating: 4.6, reviews: 22, dim: 'H 15 cm', desc: 'A small pahana in a gift box with cotton wicks — ideal for Avurudu and housewarming gifts.' }),
+    mk('p13', 's3', 'Punkalasa pair — gold plated', 'pooja', 14500, { stock: 6, images: [ART.punkalasa], sold: 15, rating: 4.7, reviews: 7, dim: 'H 26 cm each', finish: 'Gold plated', desc: 'A pair of punkalasa (pots of plenty) with coconut-flower crowns, used at weddings and openings.' }),
 
-    // s4 Dalada Metal Arts — pooja & lamps (competes with s1)
-    mk('p15', 's4', 'Five wick pahana — temple pattern', 'oil-lamps', 16900, { discount: 5, stock: 8, images: [P.lampTemple, P.lampSL], sold: 40, rating: 4.6, reviews: 18, dim: 'H 44 cm', weight: '2.2 kg', desc: 'A five-wick standing lamp with a temple-pattern stem.' }),
-    mk('p16', 's4', 'Ceremony lamp set (4)', 'pooja', 21500, { discount: 18, dealHours: 70, stock: 5, images: [P.ceremony, P.ceremony2], badge: 'Set', sold: 16, rating: 4.7, reviews: 9, desc: 'Four matching offering lamps for pooja rooms and kovils.' }),
-    mk('p17', 's4', 'Aladdin-style chain lamp', 'hanging', 11800, { stock: 6, images: [P.lampChain, P.lampWhite], sold: 19, rating: 4.4, reviews: 8, desc: 'A spouted oil lamp with lid and hanging chain.' }),
-    mk('p18', 's4', 'Diya candle holder set', 'pooja', 3200, { stock: 0, images: [P.candleHolder, P.lampFlame], sold: 88, rating: 4.5, reviews: 35, desc: 'Six small diya-style holders for festival nights.' }),
+    // Dalada Pooja Bhanda — pooja items, lamps (competes with s1)
+    mk('p14', 's4', 'Five wick Pahana — vihara pattern', 'oil-lamps', 16900, { discount: 5, stock: 8, images: [P.lampsTemple, P.lampTemple], sold: 40, rating: 4.6, reviews: 18, dim: 'H 44 cm', weight: '2.2 kg', desc: 'A five-wick standing lamp with a vihara-pattern stem.' }),
+    mk('p15', 's4', 'Pooja offering lamp set (4)', 'pooja', 12500, { discount: 18, dealHours: 70, stock: 5, images: [P.lampsBuddhist, P.lampsTemple], badge: 'Set', sold: 16, rating: 4.7, reviews: 9, desc: 'Four matching offering lamps for the shrine room or the temple.' }),
+    mk('p16', 's4', 'Brass Heppuwa (tazza) — 10 inch', 'pooja', 8900, { stock: 9, images: [ART.heppuwa, ART.heppuwaGold], sold: 28, rating: 4.6, reviews: 12, dim: 'Dia 25 cm, H 20 cm', desc: 'The footed offering tray used for flowers and food offerings at the shrine.' }),
+    mk('p17', 's4', 'Paththara alms bowl with lid and stand', 'pooja', 11800, { stock: 7, images: [ART.paththara], sold: 19, rating: 4.7, reviews: 8, dim: 'Dia 22 cm', desc: 'A brass alms bowl set with lid and stand, used for dana and temple offerings.' }),
+    mk('p18', 's4', 'Temple bell with lotus-bud handle', 'pooja', 3900, { discount: 10, stock: 0, images: [ART.bell], sold: 77, rating: 4.7, reviews: 30, dim: 'H 16 cm', desc: 'Clear, long-ringing bell with a lotus-bud handle.' }),
 
-    // s5 Hill Country Brassware — kitchen
-    mk('p19', 's5', 'Engraved brass teapot', 'kitchen', 13500, { discount: 10, dealHours: 26, stock: 7, images: [P.teapot], badge: 'Tin-lined', sold: 23, rating: 4.6, reviews: 12, dim: '1.2 L', desc: 'Tin-lined so you can brew Ceylon tea in it. Engraved body, wooden-wrapped handle.' }),
-    mk('p20', 's5', 'Samovar-style water urn', 'kitchen', 29500, { stock: 2, images: [P.samovars], sold: 5, rating: 4.5, reviews: 3, dim: '6 L', desc: 'A statement urn for weddings and dansal.' }),
-    mk('p21', 's5', 'Hammered serving pots (pair)', 'kitchen', 8900, { stock: 11, images: [P.copperPots, P.coffeePots], sold: 31, rating: 4.4, reviews: 13, desc: 'Two hammered serving pots with lids for curries and rice.' }),
-    mk('p22', 's5', 'Coffee pot set', 'kitchen', 7400, { discount: 15, stock: 6, images: [P.coffeePots], sold: 20, rating: 4.3, reviews: 6, desc: 'Three graduated pots with long pouring spouts.' })
+    // Udarata Kendiya Works — kendiya & tableware
+    mk('p19', 's5', 'Traditional Kendiya water pot', 'kendiya', 13500, { discount: 10, dealHours: 26, stock: 7, images: [ART.kendiya, ART.kendiyaAntique], badge: 'Bestseller', sold: 23, rating: 4.6, reviews: 12, dim: '1.2 L', desc: 'The spouted water vessel of the old udarata households, engraved with liyawela bands.' }),
+    mk('p20', 's5', 'Antique-finish Kendiya — large', 'kendiya', 19500, { stock: 3, images: [ART.kendiyaAntique, ART.kendiya], sold: 8, rating: 4.5, reviews: 4, dim: '2 L', finish: 'Antique patina', desc: 'A larger kendiya with an aged finish, made for display.' }),
+    mk('p21', 's5', 'Gold plated Heppuwa — wedding table', 'kendiya', 15900, { stock: 5, images: [ART.heppuwaGold, ART.heppuwa], sold: 12, rating: 4.4, reviews: 5, finish: 'Gold plated', desc: 'A footed tray for the poruwa ceremony and the wedding table.' }),
+    mk('p22', 's5', 'Kendiya miniature souvenir', 'gifts', 3500, { discount: 15, stock: 20, images: [ART.kendiya], sold: 31, rating: 4.3, reviews: 6, dim: 'H 10 cm', desc: 'A small kendiya — a light, easy-to-pack souvenir of Sri Lanka.' })
   ];
 
   const names = ['Ishara F.', 'Tharindu P.', 'Malsha K.', 'Dinesh R.', 'Sachini W.', 'Pradeep J.', 'Nethmi S.', 'Ashan M.', 'Kavindi L.', 'Ruwini D.', 'Amila G.', 'Hasini B.'];
   const lines = [
-    'Heavier and better finished than the lamps I saw in Colombo shops.',
+    'Heavier and better finished than the ones I saw in Colombo shops.',
     'Arrived well packed. The shop called on WhatsApp before sending it.',
-    'Exactly as pictured. Paid cash when it arrived, very easy.',
-    'Bought for my sister\'s wedding — everyone asked where it was from.',
+    'Exactly as described. Paid cash when it arrived, very easy.',
+    'Bought for my sister’s wedding — everyone asked where it was from.',
     'The polish is beautiful. Will order the matching pair.',
     'Took two extra days but the seller kept me updated.',
     'Good quality brass, you can feel the weight.',
-    'Lovely detail on the chasing work.'
+    'Lovely detail on the engraving.'
   ];
   const reviews = [];
   products.forEach((p, i) => {
     const n = Math.min(3, Math.max(1, Math.round(p.reviews / 10)));
-    for (let k = 0; k < n; k++) {
-      reviews.push({ id: `rv${i}_${k}`, productId: p.id, shopId: p.shopId, name: names[(i + k) % names.length], rating: k === 2 ? 4 : 5, text: lines[(i * 3 + k) % lines.length], at: now - (k * 9 + i) * D });
-    }
+    for (let k = 0; k < n; k++) reviews.push({ id: `rv${i}_${k}`, productId: p.id, shopId: p.shopId, name: names[(i + k) % names.length], rating: k === 2 ? 4 : 5, text: lines[(i * 3 + k) % lines.length], at: now - (k * 9 + i) * D });
   });
 
-  // Generate orders over the past 60 days
   const custs = [
     { name: 'Ishara Fernando', phone: '0771112233', email: 'ishara@gmail.com', address: '22/4 Flower Road', city: 'Colombo 07', district: 'Colombo', postal: '00700' },
     { name: 'Tharindu Perera', phone: '0712223344', email: 'tharindu.p@gmail.com', address: '15 Lake Drive', city: 'Kandy', district: 'Kandy', postal: '20000' },
@@ -242,31 +247,27 @@ function buildSeed() {
       const id = 'PB' + (seq++);
       const flow = ['pending', 'confirmed', 'packed', 'shipped', 'delivered'];
       const history = [];
-      if (st === 'cancelled') { history.push({ s: 'pending', at }, { s: 'cancelled', at: at + 5 * H }); }
-      else { flow.slice(0, flow.indexOf(st) + 1).forEach((s, i) => history.push({ s, at: at + i * 20 * H })); }
-      orders.push({
-        id, groupId: id, shopId: p.shopId, createdAt: at, status: st, payment: 'COD',
+      if (st === 'cancelled') history.push({ s: 'pending', at }, { s: 'cancelled', at: at + 5 * H });
+      else flow.slice(0, flow.indexOf(st) + 1).forEach((s, i) => history.push({ s, at: at + i * 20 * H }));
+      orders.push({ id, groupId: id, shopId: p.shopId, createdAt: at, status: st, payment: 'COD',
         items: [{ productId: p.id, name: p.name, img: p.images[0], price: unit, qty }],
         subtotal: sub, delivery: del, discount: 0, total: sub + del,
-        customer: { ...cust, whatsapp: cust.phone, landmark: '', notes: '', line2: '' },
-        history
-      });
+        customer: { ...cust, whatsapp: cust.phone, landmark: '', notes: '', line2: '' }, history });
     }
   }
 
   const coupons = [
-    { code: 'HILL5', shopId: 's5', type: 'pct', value: 5, minOrder: 10000, expires: now + 20 * D, uses: 4 },
+    { code: 'UDA5', shopId: 's5', type: 'pct', value: 5, minOrder: 10000, expires: now + 20 * D, uses: 4 },
     { code: 'VESAK10', shopId: 's2', type: 'pct', value: 10, minOrder: 20000, expires: now + 12 * D, uses: 2 },
-    { code: 'LAMP1000', shopId: 's1', type: 'flat', value: 1000, minOrder: 15000, expires: now + 30 * D, uses: 7 }
+    { code: 'PAHANA1000', shopId: 's1', type: 'flat', value: 1000, minOrder: 15000, expires: now + 30 * D, uses: 7 }
   ];
-
   const spotlights = [
-    { id: 'sp1', shopId: 's3', productId: 'p11', days: 7, fee: 1500, status: 'pending', at: now - 1 * D },
+    { id: 'sp1', shopId: 's3', productId: 'p10', days: 7, fee: 1500, status: 'pending', at: now - 1 * D },
     { id: 'sp2', shopId: 's1', productId: 'p1', days: 14, fee: 2500, status: 'active', at: now - 3 * D }
   ];
 
   return {
-    version: 3, seededAt: now, settings, regions, users, shops, products, reviews, orders, coupons, spotlights,
+    version: 4, seededAt: now, settings, regions, users, shops, products, reviews, orders, coupons, spotlights,
     settlements: {}, outbox: [], activity: [
       { at: now - 3 * D, who: 'Kumara Bandara Herath', what: 'confirmed registration payment for Dilani Gift Studio' },
       { at: now - 2 * D, who: 'Ruwan Senanayake', what: 'submitted a shop application (Senanayake Brass Foundry)' }

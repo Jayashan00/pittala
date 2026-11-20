@@ -67,17 +67,26 @@ assets/js/dashboards.js    super admin, region agent, shop owner and buyer dashb
 assets/js/app.js           router and actions
 ```
 
-## Hero film / videos
+## Design
 
-The hero plays a cross-fading "film" of four chapters (Lit, Cast, Chased, Polished).
-To use real video clips, open `assets/js/data.js` and put an `.mp4` link in the `video`
-field of any entry in `HERO_FILM` (for example a Pexels video file link). The photo is kept as the poster.
+Classic marketplace layout (similar to eBay): top bar, large search with category filter,
+category bar, banner carousel, Daily Deals strip, product rows, gallery/list search results,
+eBay-style product page (Buy it now / Add to cart / Watchlist, seller feedback, delivery estimate,
+compare prices from other sellers) and a clean admin-style dashboard for every role.
+Colours: Kandyan maroon `#7B1C1C` and temple gold `#B8862B` on white. Fonts: Source Sans 3 and Playfair Display.
 
 ## Photos
 
-All product and banner photos are free-to-use images from Pexels (pexels.com/license).
-Replace them with the shops' own photos as soon as they are available — shop owners can
-upload photos directly in the product editor and the shop design page.
+Only Sri Lankan photos are used (Pexels, free licence): brass lamps photographed in Kandy and in
+Sri Lankan temples, Gadaladeniya temple (Pilimathalawa), the Temple of the Tooth and others.
+Free photos of some traditional items (karaduwa, kendiya, pettagama, heppuwa, paththara, punkalasa,
+bells) do not exist online, so those products use clean studio-style product renders generated in
+`assets/js/data.js` (`productArt`).
+
+**Replace them with the shops' real photos before launch:**
+- Shop owners: Dashboard → Products → Edit → Photos → Upload photos.
+- Or edit the `images` of each product in `assets/js/data.js` (any image URL or a file in an
+  `assets/img/` folder), then run "Reset demo data" in the footer.
 
 ## Connecting a backend (next phase)
 
