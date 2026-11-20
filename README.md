@@ -23,7 +23,7 @@ There are three account roles, plus buyers who never need to register in advance
 | Region agent (Pilimathalawa, 10%) | agent@pittala.lk | agent123 |
 | Shop owner | siri@pittala.lk | shop123 |
 
-**Buyers** browse and order as guests. At checkout they give their name, mobile (SMS-verified),
+**Buyers** browse and order as guests. At checkout they give their name, mobile,
 email and address and choose a password; the account is created automatically, they are signed in,
 and their login details are emailed to them. Returning buyers enter their existing password at checkout
 or use "Forgot password" on the sign-in page.
@@ -62,7 +62,7 @@ client's workshop) to change it.
   The region agent's own shop pays **2% only**. Rates are editable in Super admin → Settings.
 - **Shop onboarding:** apply → sign agreement online → pay registration fee to the region agent →
   **agent verifies payment and approves** → **super admin gives final approval** → shop is published.
-- **Payments:** cash on delivery only. Checkout collects verified mobile (SMS code), WhatsApp,
+- **Payments:** cash on delivery only. Checkout collects mobile, WhatsApp,
   email, full address, district, postal code, landmark and delivery time.
 - **Orders:** split per shop. Each order creates automatic emails (buyer + shop) and a
   ready-to-send WhatsApp message. The shop owner clicks **Send on WhatsApp** (opens `wa.me`, no API).
@@ -113,6 +113,4 @@ Replace those functions with API calls (e.g. Supabase, Firebase or a Node/Larave
 - **Auth:** replace demo passwords with real authentication. In production, email a *set-password link*
   instead of the password itself (the demo emails the password because that was the requested flow).
 - **Emails:** the `outbox` entries are where a mail service (Resend, SendGrid, EmailJS) should be called.
-- **SMS code:** checkout shows the code in a toast for the demo; connect an SMS gateway
-  (e.g. Notify.lk, Dialog/Mobitel bulk SMS) for real verification.
 - **Images:** move uploads to storage (Supabase Storage, Cloudinary, S3) instead of the browser.

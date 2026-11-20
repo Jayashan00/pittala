@@ -1,7 +1,6 @@
 /* Cart, checkout, tracking, registration and sign-in */
 
 let appliedCoupons = {}; // shopId -> coupon
-let otp = { code: null, phone: null, verified: false };
 
 function cartGroups() {
   const groups = {};
@@ -82,17 +81,7 @@ Pages.checkout = () => {
     };
     f.district.addEventListener('change', recalc);
     f.sameWa.addEventListener('change', () => { f.whatsapp.disabled = f.sameWa.checked; if (f.sameWa.checked) f.whatsapp.value = f.phone.value; });
-    f.phone.addEventListener('input', () => { if (f.sameWa.checked) f.whatsapp.value = f.phone.value; if (normPhone(f.phone.value) !== otp.phone) { otp.verified = false; document.getElementById('otpState').innerHTML = ''; } });
-    document.getElementById('sendOtp').addEventListener('click', () => {
-      if (!validLKMobile(f.phone.value)) { showErr(f.phone, 'Enter a Sri Lankan mobile number, e.g. 0771234567'); return; }
-      otp = { code: String(Math.floor(1000 + Math.random() * 9000)), phone: normPhone(f.phone.value), verified: false };
-      document.getElementById('otpRow').classList.remove('hide');
-      toast(`SMS preview (demo): your Pittala code is ${otp.code}`);
-    });
-    document.getElementById('checkOtp').addEventListener('click', () => {
-      if (f.otp.value.trim() === otp.code) { otp.verified = true; document.getElementById('otpRow').classList.add('hide'); document.getElementById('otpState').innerHTML = `<span class="badge green">${icon('check')} Number verified</span>`; }
-      else toast('That code does not match. Check the SMS and try again.', true);
-    });
+    f.phone.addEventListener('input', () => { if (f.sameWa.checked) f.whatsapp.value = f.phone.value; });
     f.addEventListener('submit', e => {
       e.preventDefault();
       f.querySelectorAll('.err').forEach(x => x.remove()); f.querySelectorAll('.bad').forEach(x => x.classList.remove('bad'));
@@ -108,7 +97,6 @@ Pages.checkout = () => {
       need(f.city, (v.city || '').trim().length >= 2, 'Enter your town or city');
       need(f.district, !!v.district, 'Choose your district');
       need(f.postal, /^\d{5}$/.test(v.postal || ''), 'Postal codes in Sri Lanka have 5 digits');
-      if (!otp.verified || otp.phone !== normPhone(v.phone)) { showErr(f.phone, 'Verify this number with the SMS code first'); ok = false; }
       // Guest checkout creates (or links) a buyer account automatically
       const existing = !u && v.email ? Store.s.users.find(x => x.email.toLowerCase() === v.email.trim().toLowerCase()) : null;
       if (!u) {
@@ -124,7 +112,7 @@ Pages.checkout = () => {
       if (!ok) { const first = f.querySelector('.bad'); first && first.focus(); toast('Some details need fixing before we can place the order.', true); return; }
       const customer = { name: v.name.trim(), phone: v.phone, whatsapp: v.whatsapp, email: v.email.trim(), address: v.address.trim(), line2: (v.line2 || '').trim(), city: v.city.trim(), district: v.district, postal: v.postal, landmark: (v.landmark || '').trim(), notes: (v.notes || '').trim(), time: v.time };
       const res = Store.placeOrder(customer, appliedCoupons);
-      appliedCoupons = {}; otp = { code: null, phone: null, verified: false };
+      appliedCoupons = {};
       let acct = '';
       if (!u) {
         if (existing) { Store.s.session = existing.id; acct = 'linked'; }
@@ -147,9 +135,8 @@ Pages.checkout = () => {
       <div>
         <div class="card"><h3>Contact</h3><div class="form-grid">
           <div class="field full"><label for="f-name">Full name</label><input class="input" id="f-name" name="name" autocomplete="name" value="${esc(pre.name || '')}" required></div>
-          <div class="field"><label for="f-phone">Mobile number</label><div style="display:flex;gap:8px"><input class="input" id="f-phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="07X XXX XXXX" value="${esc(pre.phone || '')}"><button type="button" class="btn btn-ghost btn-sm" id="sendOtp">Send code</button></div><span id="otpState"></span></div>
+          <div class="field"><label for="f-phone">Mobile number</label><input class="input" id="f-phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="07X XXX XXXX" value="${esc(pre.phone || '')}"><span class="hint">The shop will call or WhatsApp this number to confirm your order.</span></div>
           <div class="field"><label for="f-wa">WhatsApp number</label><input class="input" id="f-wa" name="whatsapp" inputmode="tel" disabled value="${esc(pre.phone || '')}"><label class="chk"><input type="checkbox" name="sameWa" checked> Same as mobile</label></div>
-          <div class="field full hide" id="otpRow"><label for="f-otp">Enter the 4-digit code we sent to your phone</label><div style="display:flex;gap:8px;max-width:280px"><input class="input" id="f-otp" name="otp" inputmode="numeric" maxlength="4"><button type="button" class="btn btn-dark btn-sm" id="checkOtp">Verify</button></div></div>
           <div class="field full"><label for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" value="${esc(pre.email || '')}"><span class="hint">Your order confirmation is sent here.</span></div>
           ${u ? `<div class="field full"><span class="badge green">${icon('check')} Signed in as ${esc(u.email)} — this order is saved to your account</span></div>` : `
           <div class="field full" style="border-top:1px dashed var(--line);padding-top:12px"><b>Your account</b><span class="hint">No sign-up needed. We create your account with this order so you can track it, and email your login details to you.</span></div>

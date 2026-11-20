@@ -340,6 +340,8 @@ const SI_DICT = {
   'Cast in brass': 'පිත්තලෙන් වාත්තු කළ', 'Temple Pahana — tall standing lamp, 3 feet': 'විහාර පහන — උස සිටුවන පහන, අඩි 3',
   'Shop owner · Siri Pittala Works': 'වෙළඳසැල් හිමිකරු · සිරි පිත්තල වැඩපොළ',
   '/ Delivery details': '/ බෙදාහැරීමේ විස්තර', '/ Register': '/ ලියාපදිංචිය', 'Skip to content': 'අන්තර්ගතයට යන්න',
+  'The shop will call or WhatsApp this number to confirm your order.': 'ඔබේ ඇණවුම තහවුරු කිරීමට වෙළඳසැල මෙම අංකයට අමතනු හෝ WhatsApp කරනු ඇත.',
+  'Every order includes the buyer’s mobile and WhatsApp number. Use the WhatsApp button in your dashboard to confirm before you dispatch.': 'සෑම ඇණවුමකම ගැනුම්කරුගේ ජංගම සහ WhatsApp අංකය ඇත. යැවීමට පෙර තහවුරු කිරීමට ඔබේ පාලක පුවරුවේ WhatsApp බොත්තම භාවිත කරන්න.',
   // Districts
   'Ampara': 'අම්පාර', 'Anuradhapura': 'අනුරාධපුරය', 'Badulla': 'බදුල්ල', 'Batticaloa': 'මඩකලපුව', 'Colombo': 'කොළඹ', 'Galle': 'ගාල්ල', 'Gampaha': 'ගම්පහ', 'Hambantota': 'හම්බන්තොට', 'Jaffna': 'යාපනය', 'Kalutara': 'කළුතර', 'Kandy': 'මහනුවර', 'Kegalle': 'කෑගල්ල',
   'Kilinochchi': 'කිලිනොච්චිය', 'Kurunegala': 'කුරුණෑගල', 'Mannar': 'මන්නාරම', 'Matale': 'මාතලේ', 'Matara': 'මාතර', 'Monaragala': 'මොණරාගල', 'Mullaitivu': 'මුලතිව්', 'Nuwara Eliya': 'නුවරඑළිය', 'Polonnaruwa': 'පොළොන්නරුව', 'Puttalam': 'පුත්තලම', 'Ratnapura': 'රත්නපුර', 'Trincomalee': 'ත්‍රිකුණාමලය', 'Vavuniya': 'වවුනියාව'

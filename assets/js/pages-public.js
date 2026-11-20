@@ -541,7 +541,7 @@ Pages.sell = () => {
     <section class="block" style="padding-top:0"><div class="card"><h3>Common questions</h3>
       ${[['Who handles delivery?', 'You do, using your usual courier. You collect the cash on delivery and keep the delivery fee shown to the buyer.'],
          ['Can I still sell in my shop and elsewhere?', 'Yes. The agreement covers only orders placed through Pittala.lk.'],
-         ['How do I know an order is genuine?', 'Every order includes the buyer’s verified mobile number. Use the WhatsApp button in your dashboard to confirm before you dispatch.']]
+         ['How do I know an order is genuine?', 'Every order includes the buyer’s mobile and WhatsApp number. Use the WhatsApp button in your dashboard to confirm before you dispatch.']]
         .map(([a, b]) => `<details style="padding:12px 0;border-bottom:1px solid var(--line)"><summary style="font-weight:600;cursor:pointer">${a}</summary><p style="margin:8px 0 0" class="muted">${b}</p></details>`).join('')}
     </div></section>
   </div>`;
