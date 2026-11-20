@@ -875,3 +875,7 @@ body { overflow-x: clip; }
   .vhero .inner { padding: 50px 0 60px; }
 }
 .seller-row { grid-template-columns: repeat(auto-fit, minmax(230px, 290px)); justify-content: center; }
+/* product card: hover button sits on the bottom of the photo, never over the text */
+.pcard-top { position: relative; }
+.pcard .quick-add { left: 10px; right: 10px; bottom: 10px; top: auto; }
+.preview-frame .pcard:hover, #pPreview .pcard:hover { transform: none; }

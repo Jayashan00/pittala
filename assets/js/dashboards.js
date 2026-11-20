@@ -221,7 +221,7 @@ function openProductEditor(shop, id) {
   };
   const draw = () => {
     back.querySelector('#imgList').innerHTML = imgs.map((src, i) => `<button type="button" class="${i ? '' : 'on'}" data-cover="${i}" title="Make cover"><img src="${esc(src)}" alt=""><span class="x" data-rm="${i}" aria-label="Remove">×</span></button>`).join('') || '<small class="muted">No photos yet.</small>';
-    back.querySelector('#pPreview').innerHTML = productCard(read()).replace(/href="#\/[^"]*"/g, 'href="javascript:void(0)"').replace(/data-action="[^"]*"/g, '');
+    back.querySelector('#pPreview').innerHTML = productCard(read(), { preview: true }).replace(/href="#\/[^"]*"/g, 'href="javascript:void(0)"').replace(/data-action="[^"]*"/g, '');
   };
   f.addEventListener('input', draw);
   back.querySelector('#imgList').addEventListener('click', e => {
@@ -333,7 +333,7 @@ function designView(shop) {
       prev.innerHTML = `<div style="--shop-c:${esc(d.color)}"><section class="store-hero"><img src="${esc(d.banner)}" alt=""></section>
         <div class="store-head f-${esc(d.font)}"><div class="store-logo">${esc(initials(d.name))}</div><div><h1 style="font-size:1.3rem">${esc(L(d, 'name'))}</h1><div class="muted">${esc(L(d, 'tagline'))}</div></div></div>
         <div style="padding:0 14px">${d.announcement ? `<div class="store-announce">${esc(L(d, 'announcement'))}</div>` : ''}
-        <div class="layout-${esc(d.layout)}" style="margin-top:14px"><div class="grid">${Store.s.products.filter(p => p.shopId === shop.id).slice(0, d.layout === 'compact' ? 4 : d.layout === 'editorial' ? 2 : 3).map(p => productCard(p, { hideShop: true })).join('') || '<p class="muted">Your products will appear here.</p>'}</div></div></div></div>`;
+        <div class="layout-${esc(d.layout)}" style="margin-top:14px"><div class="grid">${Store.s.products.filter(p => p.shopId === shop.id).slice(0, d.layout === 'compact' ? 4 : d.layout === 'editorial' ? 2 : 3).map(p => productCard(p, { hideShop: true, preview: true })).join('') || '<p class="muted">Your products will appear here.</p>'}</div></div></div></div>`;
       document.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', b.dataset.color === d.color));
       document.querySelectorAll('[data-banner]').forEach(b => b.classList.toggle('on', b.dataset.banner === d.banner));
     };

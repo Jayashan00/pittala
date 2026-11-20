@@ -133,13 +133,15 @@ function productCard(p, opts = {}) {
   const deal = Store.dealActive(p);
   const wished = Store.s.wishlist.includes(p.id);
   return `<article class="pcard ${sold ? 'is-sold' : ''}">
-    <a class="pcard-media" href="#/product/${p.id}" aria-label="${esc(L(p, 'name'))}">
-      <img src="${esc(p.images[0])}" alt="${esc(L(p, 'name'))}" loading="lazy">
-      ${deal && !sold ? `<span class="deal-ribbon">−${p.discount}%</span>` : p.badge && !sold ? `<span class="tag-badge">${esc(p.badge)}</span>` : ''}
-      ${sold ? SEAL : ''}
-    </a>
-    <button class="wish ${wished ? 'on' : ''}" data-action="wish" data-id="${p.id}" aria-label="${wished ? 'Remove from' : 'Add to'} watchlist" aria-pressed="${wished}">${icon('heart')}</button>
-    ${sold ? '' : `<button class="btn btn-brass btn-sm quick-add" data-action="add" data-id="${p.id}">${icon('cart')} Add to cart</button>`}
+    <div class="pcard-top">
+      <a class="pcard-media" href="#/product/${p.id}" aria-label="${esc(L(p, 'name'))}">
+        <img src="${esc(p.images[0])}" alt="${esc(L(p, 'name'))}" loading="lazy">
+        ${deal && !sold ? `<span class="deal-ribbon">−${p.discount}%</span>` : p.badge && !sold ? `<span class="tag-badge">${esc(p.badge)}</span>` : ''}
+        ${sold ? SEAL : ''}
+      </a>
+      ${opts.preview ? '' : `<button class="wish ${wished ? 'on' : ''}" data-action="wish" data-id="${p.id}" aria-label="${wished ? 'Remove from' : 'Add to'} watchlist" aria-pressed="${wished}">${icon('heart')}</button>`}
+      ${sold || opts.preview ? '' : `<button class="btn btn-brass btn-sm quick-add" data-action="add" data-id="${p.id}">${icon('cart')} Add to cart</button>`}
+    </div>
     <div class="pcard-body">
       <h3><a href="#/product/${p.id}">${esc(L(p, 'name'))}</a></h3>
       <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s><span class="off">${p.discount}% off</span>` : ''}</div>
