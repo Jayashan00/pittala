@@ -41,19 +41,19 @@ Pages.cart = () => {
     <div class="page-head"><h1 style="font-size:clamp(2rem,4vw,2.8rem)">Your cart</h1><p class="muted" style="margin-top:6px">Items from different shops are packed and delivered separately, each with its own cash-on-delivery payment.</p></div>
     <div class="two-col">
       <div>${groups.map(g => `<div class="card shop-group">
-        <div class="shop-group-head"><a href="#/store/${g.shop.id}" style="display:flex;gap:10px;align-items:center">${shopLogo(g.shop)}${esc(g.shop.name)}</a><span>${money(g.subtotal)}</span></div>
+        <div class="shop-group-head"><a href="#/store/${g.shop.id}" style="display:flex;gap:10px;align-items:center">${shopLogo(g.shop)}${esc(L(g.shop, 'name'))}</a><span>${money(g.subtotal)}</span></div>
         ${g.lines.map(l => `<div class="line-item">
           <a href="#/product/${l.p.id}"><img src="${esc(l.p.images[0])}" alt=""></a>
-          <div><a href="#/product/${l.p.id}"><b>${esc(l.p.name)}</b></a><div class="price"><b>${money(Store.priceOf(l.p))}</b>${Store.dealActive(l.p) ? `<s>${money(l.p.price)}</s>` : ''}</div>
+          <div><a href="#/product/${l.p.id}"><b>${esc(L(l.p, 'name'))}</b></a><div class="price"><b>${money(Store.priceOf(l.p))}</b>${Store.dealActive(l.p) ? `<s>${money(l.p.price)}</s>` : ''}</div>
             ${Store.isFlash(l.p) ? miniTimer(l.p.dealEnds) : ''}
             <div style="display:flex;gap:10px;align-items:center;margin-top:8px"><div class="qty"><button data-cq="-1" data-id="${l.p.id}" aria-label="Less">−</button><input value="${l.qty}" readonly aria-label="Quantity"><button data-cq="1" data-id="${l.p.id}" aria-label="More">+</button></div>
             <button class="btn btn-ghost btn-sm" data-action="remove-line" data-id="${l.p.id}">Remove</button></div></div>
           <b>${money(Store.priceOf(l.p) * l.qty)}</b></div>`).join('')}
         <form data-coupon="${g.shop.id}" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-          ${g.coupon ? `<span class="badge green">${icon('check')} ${esc(g.coupon.code)} saves ${money(g.discount)}</span>` : `<input class="input" name="code" placeholder="Coupon for ${esc(g.shop.name)}" style="max-width:240px"><button class="btn btn-ghost btn-sm">Apply</button>`}
+          ${g.coupon ? `<span class="badge green">${icon('check')} ${esc(g.coupon.code)} saves ${money(g.discount)}</span>` : `<input class="input" name="code" placeholder="Coupon for ${esc(L(g.shop, 'name'))}" style="max-width:240px"><button class="btn btn-ghost btn-sm">Apply</button>`}
         </form></div>`).join('')}</div>
       <aside class="card summary"><h3>Order summary</h3>
-        ${groups.map(g => `<div class="sum-row"><span>${esc(g.shop.name)}</span><span>${money(g.subtotal - g.discount)}</span></div>`).join('')}
+        ${groups.map(g => `<div class="sum-row"><span>${esc(L(g.shop, 'name'))}</span><span>${money(g.subtotal - g.discount)}</span></div>`).join('')}
         <div class="sum-row"><span>Delivery</span><span class="muted">Calculated at checkout</span></div>
         <div class="sum-row total"><span>Subtotal</span><span>${money(sub)}</span></div>
         <div class="cod-box" style="margin:14px 0">${icon('coins')}<div><b>Cash on delivery</b><br><small class="muted">The only payment method. Pay each shop when your parcel arrives.</small></div></div>
@@ -160,16 +160,16 @@ Pages.checkout = () => {
           <div class="field full"><label for="f-a1">House number and street</label><input class="input" id="f-a1" name="address" autocomplete="address-line1"></div>
           <div class="field full"><label for="f-a2">Apartment, lane or area (optional)</label><input class="input" id="f-a2" name="line2" autocomplete="address-line2"></div>
           <div class="field"><label for="f-city">Town / city</label><input class="input" id="f-city" name="city" autocomplete="address-level2"></div>
-          <div class="field"><label for="f-dist">District</label><select class="input" id="f-dist" name="district"><option value="">Choose district</option>${DISTRICTS.map(d => `<option>${d}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-dist">District</label><select class="input" id="f-dist" name="district"><option value="">Choose district</option>${DISTRICTS.map(d => `<option value="${d}">${d}</option>`).join('')}</select></div>
           <div class="field"><label for="f-post">Postal code</label><input class="input" id="f-post" name="postal" inputmode="numeric" maxlength="5" autocomplete="postal-code"></div>
-          <div class="field"><label for="f-time">Best time to deliver</label><select class="input" id="f-time" name="time"><option>Any time</option><option>Morning (8–12)</option><option>Afternoon (12–4)</option><option>Evening (4–7)</option></select></div>
+          <div class="field"><label for="f-time">Best time to deliver</label><select class="input" id="f-time" name="time"><option value="Any time">Any time</option><option value="Morning (8–12)">Morning (8–12)</option><option value="Afternoon (12–4)">Afternoon (12–4)</option><option value="Evening (4–7)">Evening (4–7)</option></select></div>
           <div class="field full"><label for="f-land">Nearest landmark</label><input class="input" id="f-land" name="landmark" placeholder="e.g. opposite the temple, next to Keells"></div>
           <div class="field full"><label for="f-notes">Notes for the shop (optional)</label><textarea class="input" id="f-notes" name="notes" placeholder="Gift wrapping, engraving request, gate code…"></textarea></div>
         </div></div>
       </div>
       <aside class="card summary"><h3>Your order</h3>
-        ${groups.map(g => `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(g.shop.name)}</b>
-          ${g.lines.map(l => `<div class="sum-row"><span>${l.qty} × ${esc(l.p.name)}</span><span>${money(Store.priceOf(l.p) * l.qty)}</span></div>`).join('')}
+        ${groups.map(g => `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(L(g.shop, 'name'))}</b>
+          ${g.lines.map(l => `<div class="sum-row"><span>${l.qty} × ${esc(L(l.p, 'name'))}</span><span>${money(Store.priceOf(l.p) * l.qty)}</span></div>`).join('')}
           ${g.discount ? `<div class="sum-row"><span>Coupon ${esc(g.coupon.code)}</span><span>−${money(g.discount)}</span></div>` : ''}
           <div class="sum-row"><span>Delivery</span><span data-del="${g.shop.id}">—</span></div></div>`).join('')}
         <div class="sum-row total"><span>Total to pay on delivery</span><span id="coTotal">${money(groups.reduce((a, g) => a + g.subtotal - g.discount, 0))}</span></div>
@@ -202,19 +202,19 @@ Pages.order = (q, gid) => {
   const c = orders[0].customer;
   const acctMailIdx = Store.s.outbox.findIndex(m => m.kind === 'account' && m.to === c.email);
   const acctMail = Store.s.outbox[acctMailIdx];
-  const acctBox = q.acct === 'new' ? `<div class="card" style="border:2px solid var(--brass);margin-bottom:16px"><div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"><span class="avatar">${icon('user')}</span><div style="flex:1;min-width:220px"><b>Your Pittala.lk account is ready</b><p class="muted" style="margin:4px 0 10px">We created an account for <b>${esc(c.email)}</b> and emailed your login details. You are signed in now, and you can follow this order any time from <a href="#/dashboard/orders" style="text-decoration:underline">My orders</a>.</p>
+  const acctBox = q.acct === 'new' ? `<div class="card" style="border:2px solid var(--brass);margin-bottom:16px"><div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap"><span class="avatar">${icon('user')}</span><div style="flex:1;min-width:220px"><b>Your Pittala.lk account is ready</b><p class="muted" style="margin:4px 0 10px">${esc(`We created an account for ${c.email} and emailed your login details. You are signed in now and can follow this order any time from My orders.`)}</p>
       <div class="row-actions">${acctMail ? `<button class="btn btn-ghost btn-sm" data-action="mail" data-i="${acctMailIdx}">${icon('mail')} View the email</button><a class="btn btn-ghost btn-sm" href="${mailLink(c.email, acctMail.subject, acctMail.body)}">Open in my email app</a>` : ''}<a class="btn btn-dark btn-sm" href="#/dashboard/orders">My orders</a></div></div></div></div>`
     : q.acct === 'linked' ? `<div class="notice">This order was added to your existing account. <a href="#/dashboard/orders" style="text-decoration:underline">See all your orders</a></div>` : '';
   return `<div class="wrap" style="max-width:900px;padding-bottom:60px">
     <div class="page-head" style="text-align:center">
       <div style="width:70px;height:70px;border-radius:50%;background:var(--patina-900);color:var(--brass-light);display:grid;place-items:center;margin:0 auto 16px">${icon('check')}</div>
       <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Thank you, ${esc(c.name.split(' ')[0])}</h1>
-      <p class="muted" style="margin-top:8px">Order <b>${esc(gid)}</b> has been placed. A confirmation email is on its way to ${esc(c.email)}. Each shop will WhatsApp you on ${esc(c.whatsapp)} before dispatch.</p>
+      <p class="muted" style="margin-top:8px">${esc(`Order ${gid} has been placed. A confirmation email is on its way to ${c.email}. Each shop will WhatsApp you on ${c.whatsapp} before dispatch.`)}</p>
     </div>
     ${acctBox}
     ${orders.map(o => { const s = Store.shop(o.shopId); return `<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">${shopLogo(s)}<div><b>${esc(s.name)}</b><br><small class="muted">Order ${esc(o.id)}</small></div></div>${statusPill(o.status)}</div>
-      ${o.items.map(i => `<div class="line-item" style="grid-template-columns:60px 1fr auto"><img src="${esc(i.img)}" alt="" style="width:60px;height:60px"><span>${i.qty} × ${esc(i.name)}</span><b>${money(i.price * i.qty)}</b></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="display:flex;gap:10px;align-items:center">${shopLogo(s)}<div><b>${esc(L(s, 'name'))}</b><br><small class="muted">Order ${esc(o.id)}</small></div></div>${statusPill(o.status)}</div>
+      ${o.items.map(i => `<div class="line-item" style="grid-template-columns:60px 1fr auto"><img src="${esc(i.img)}" alt="" style="width:60px;height:60px"><span>${i.qty} × ${esc(itemName(i))}</span><b>${money(i.price * i.qty)}</b></div>`).join('')}
       ${o.discount ? `<div class="sum-row"><span>Coupon ${esc(o.coupon)}</span><span>−${money(o.discount)}</span></div>` : ''}
       <div class="sum-row"><span>Delivery</span><span>${o.delivery ? money(o.delivery) : 'Free'}</span></div>
       <div class="sum-row total"><span>Pay on delivery</span><span>${money(o.total)}</span></div>
@@ -234,11 +234,11 @@ Pages.track = (q) => {
   if (id) {
     const o = Store.s.orders.find(x => x.id.toUpperCase() === id);
     if (!o || (phone && normPhone(o.customer.phone).slice(-9) !== normPhone(phone).slice(-9))) {
-      result = `<div class="notice red">We could not find order ${esc(id)} with that phone number. Check the order number in your email.</div>`;
+      result = `<div class="notice red">${esc(`We could not find order ${id} with that phone number. Check the order number in your email.`)}</div>`;
     } else {
       const s = Store.shop(o.shopId);
       const idx = ORDER_FLOW.indexOf(o.status);
-      result = `<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><b>Order ${esc(o.id)}</b><br><small class="muted">${esc(s.name)} · placed ${fmtDateTime(o.createdAt)}</small></div>${statusPill(o.status)}</div>
+      result = `<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><b>Order ${esc(o.id)}</b><br><small class="muted">${esc(L(s, 'name'))} · placed ${fmtDateTime(o.createdAt)}</small></div>${statusPill(o.status)}</div>
         ${o.status === 'cancelled' ? '<p class="notice red" style="margin-top:14px">This order was cancelled.</p>' : `<div class="pipeline" style="grid-template-columns:repeat(5,1fr)">${ORDER_FLOW.map((st, i) => `<div class="pipe ${i < idx ? 'done' : i === idx ? 'current' : ''}"><b>${STATUS_LABEL[st]}</b>${o.history.find(h => h.s === st) ? `<span>${fmtDateTime(o.history.find(h => h.s === st).at)}</span>` : ''}</div>`).join('')}</div>`}
         <div class="sum-row total"><span>Amount to pay on delivery</span><span>${money(o.total)}</span></div>
         <a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(s.whatsapp, `Hello ${s.name}, checking on my order ${o.id}.`)}">${icon('wa')} Ask the shop</a></div>`;
@@ -266,9 +266,27 @@ function agreementText(d, rate) {
   const st = Store.s.settings;
   const r = Store.region(d.regionId) || Store.s.regions[0];
   const agentName = Store.userById(r.agentUserId)?.name || 'the region agent';
+  if (isSi()) return `<div class="agreement" id="agreeBox" data-notr>
+    <p><b>Pittala.lk විකුණුම්කරු ගිවිසුම</b> — 2026.1 අනුවාදය</p>
+    <p>මෙම ගිවිසුම <b>${esc(d.shopName || '[වෙළඳසැලේ නම]')}</b> ("වෙළඳසැල") හි හිමිකරු <b>${esc(d.ownerName || '[හිමිකරුගේ නම]')}</b>, ${esc(r.name)} කලාපයේ කලාපීය නියෝජිත <b>${esc(agentName)}</b> ("නියෝජිත") සහ Pittala.lk ("වේදිකාව") අතර වේ.</p>
+    <h4>1. කොමිස් මුදල</h4>
+    <p>වේදිකාව හරහා ලැබී භාරදුන් සෑම ඇණවුමකම වටිනාකමින් (බෙදාහැරීමේ ගාස්තු හැර) <b>${rate}%</b> ක කොමිස් මුදලක් ගෙවීමට වෙළඳසැල එකඟ වේ. එයින් <b>${st.agentRate}%</b> නියෝජිතට සහ <b>${st.platformRate}%</b> වේදිකාවට ගෙවිය යුතුය. අවලංගු කළ සහ ආපසු ලැබුණු ඇණවුම් සඳහා කොමිස් අය නොකෙරේ.</p>
+    <h4>2. ලියාපදිංචි ගාස්තුව</h4>
+    <p>අනුමැතියට පෙර <b>${money(st.regFee).replace('Rs.', 'රු.')}</b> ක එක් වරක් පමණක් ගෙවන, ආපසු නොගෙවන ලියාපදිංචි ගාස්තුවක් නියෝජිතට ගෙවිය යුතුය. නියෝජිත ගෙවීම තහවුරු කළ පසු වේදිකාව අවසන් අනුමැතිය ලබා දී වෙළඳසැල ප්‍රකාශයට පත් කරයි.</p>
+    <h4>3. ගෙවීම් සහ පියවීම්</h4>
+    <p>සියලුම ගැනුම්කරු ගෙවීම් භාණ්ඩ ලැබුණු විට මුදල් ගෙවීමේ ක්‍රමයට වන අතර ඒවා වෙළඳසැල විසින් එකතු කරයි. කොමිස් මුදල මාසිකව ගණනය කර ඊළඟ මාසයේ 10 වැනිදාට පෙර පියවිය යුතුය. ප්‍රකාශන වෙළඳසැල් පාලක පුවරුවේ ලබා ගත හැක.</p>
+    <h4>4. ලැයිස්තුගත කිරීම් සහ මිල</h4>
+    <p>වෙළඳසැල සිය මිල, වට්ටම් සහ කූපන් තීරණය කරන අතර නිවැරදි ඡායාරූප, විස්තර, ද්‍රව්‍ය සහ තොග තොරතුරු සඳහා වගකිව යුතුය. භාණ්ඩ සැබෑ පිත්තලෙන් හෝ සඳහන් කළ ලෝහයෙන් සාදා තිබිය යුතුය.</p>
+    <h4>5. ඇණවුම් සහ බෙදාහැරීම</h4>
+    <p>වෙළඳසැල සෑම ඇණවුමක්ම පැය 24 ක් ඇතුළත ගැනුම්කරු සමඟ (WhatsApp හෝ දුරකථනයෙන්) තහවුරු කර, පෙන්වා ඇති කාලය තුළ යවා, ඇණවුමේ තත්ත්වය යාවත්කාලීනව තබා ගත යුතුය.</p>
+    <h4>6. හැසිරීම</h4>
+    <p>කොමිස් මඟහැරීම සඳහා වේදිකාවේ ගැනුම්කරුවන් පිටත විකුණුම්වලට යොමු නොකළ යුතුය. නැවත නැවත අවලංගු කිරීම්, වැරදි ලැයිස්තු හෝ නොගෙවූ කොමිස් සඳහා නියෝජිත හෝ වේදිකාව වෙළඳසැල අත්හිටුවිය හැක.</p>
+    <h4>7. කාලසීමාව</h4>
+    <p>කිසියම් පාර්ශ්වයක් දින 30 ක ලිඛිත දැනුම්දීමක් ලබා දෙන තෙක් මෙම ගිවිසුම බලාත්මකව පවතී. අවසන් කිරීමට පෙර භාරදුන් ඇණවුම් සඳහා කොමිස් මුදල ගෙවිය යුතුමය.</p>
+  </div>`;
   return `<div class="agreement" id="agreeBox">
     <p><b>Pittala.lk Seller Agreement</b> — version 2026.1</p>
-    <p>This agreement is between <b>${esc(d.ownerName || '[Owner name]')}</b>, owner of <b>${esc(d.shopName || '[Shop name]')}</b> (“the Shop”); <b>${esc(agentName)}</b>, Region Agent for ${esc(r.name)} (“the Agent”); and Pittala.lk (“the Platform”).</p>
+    <p>This agreement is between <b>${esc(d.ownerName || '[Owner name]')}</b>, owner of <b>${esc(d.shopName || '[Shop name]')}</b> (“the Shop”); <b>${esc(agentName)}</b>, Region Agent for ${esc(L(r, 'name'))} (“the Agent”); and Pittala.lk (“the Platform”).</p>
     <h4>1. Commission</h4>
     <p>The Shop agrees to pay a commission of <b>${rate}%</b> on the value of every delivered order placed through the Platform, excluding delivery fees. Of this, <b>${st.agentRate}%</b> is payable to the Agent and <b>${st.platformRate}%</b> to the Platform. Cancelled and returned orders are not charged.</p>
     <h4>2. Registration fee</h4>
@@ -341,12 +359,14 @@ Pages.register = () => {
   let body = '';
   if (step === 1) body = `<div class="form-grid">
       <div class="field full"><label>Shop name</label><input class="input" name="shopName" value="${esc(d.shopName || '')}" placeholder="e.g. Herath Brass Works"></div>
-      <div class="field"><label>Region</label><select class="input" name="regionId">${Store.s.regions.map(x => `<option value="${x.id}" ${x.id === d.regionId ? 'selected' : ''}>${esc(x.name)}, ${esc(x.district)}</option>`).join('')}</select></div>
+      <div class="field"><label>Region</label><select class="input" name="regionId">${Store.s.regions.map(x => `<option value="${x.id}" ${x.id === d.regionId ? 'selected' : ''}>${esc(L(x, 'name'))}, ${esc(x.district)}</option>`).join('')}</select></div>
       <div class="field"><label>Year established</label><input class="input" name="est" type="number" min="1900" max="${new Date().getFullYear()}" value="${esc(d.est || '')}"></div>
       <div class="field full"><label>Workshop address</label><input class="input" name="address" value="${esc(d.address || '')}"></div>
       <div class="field full"><label>One-line description</label><input class="input" name="tagline" maxlength="70" value="${esc(d.tagline || '')}" placeholder="e.g. Hand-cast temple lamps and bells"></div>
+      <div class="field si-field"><label>Shop name</label><input class="input" name="shopName_si" lang="si" value="${esc(d.shopName_si || '')}" placeholder="උදා: හේරත් පිත්තල වැඩපොළ"></div>
+      <div class="field si-field"><label>One-line description</label><input class="input" name="tagline_si" lang="si" maxlength="90" value="${esc(d.tagline_si || '')}" placeholder="උදා: අතින් වාත්තු කළ විහාර පහන්"></div>
       <div class="field"><label>Number of artisans</label><input class="input" name="artisans" type="number" min="1" value="${esc(d.artisans || '')}"></div>
-      <div class="field full"><label>What do you make?</label><div style="display:flex;flex-wrap:wrap;gap:4px 16px">${CATEGORIES.map(c => `<label class="chk"><input type="checkbox" name="cats" value="${c.id}" ${(d.cats || []).includes(c.id) ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}</div></div>
+      <div class="field full"><label>What do you make?</label><div style="display:flex;flex-wrap:wrap;gap:4px 16px">${CATEGORIES.map(c => `<label class="chk"><input type="checkbox" name="cats" value="${c.id}" ${(d.cats || []).includes(c.id) ? 'checked' : ''}> ${esc(L(c, 'name'))}</label>`).join('')}</div></div>
     </div>`;
   if (step === 2) body = `<div class="form-grid">
       <div class="field"><label>Owner’s full name</label><input class="input" name="ownerName" value="${esc(d.ownerName || '')}"></div>
@@ -360,17 +380,17 @@ Pages.register = () => {
       <label class="chk" style="margin-top:14px"><input type="checkbox" name="agree" ${d.agree ? 'checked' : ''}> I have read and accept the ${st.agentRate + st.platformRate}% commission agreement.</label>
       <div class="form-grid" style="margin-top:12px"><div class="field"><label>Type your full name to sign</label><input class="input" name="signedName" value="${esc(d.signedName || '')}"></div>
       <div class="field"><label>Signature</label><div class="signature" id="sigPreview">${esc(d.signedName || '')}</div><span class="hint">Signed ${fmtDate(Date.now())}</span></div></div>`;
-  if (step === 4) body = `<div class="notice">Deposit <b>${money(st.regFee)}</b> to the ${esc(r.name)} region agent, then enter the reference below. Your application goes to the agent for payment verification.</div>
+  if (step === 4) body = `<div class="notice">${esc(`Deposit ${money(st.regFee)} to the ${r.name} region agent, then enter the reference below. Your application goes to the agent for payment verification.`)}</div>
       <dl class="specs" style="grid-template-columns:160px 1fr"><dt>Account name</dt><dd>${esc(r.accName)}</dd><dt>Bank</dt><dd>${esc(r.bank)}</dd><dt>Account number</dt><dd>${esc(r.accNo)}</dd><dt>Agent</dt><dd>${esc(agentUser?.name || '')}, ${esc(agentUser?.phone || '')}</dd><dt>Reference to use</dt><dd>${esc((d.shopName || '').toUpperCase().slice(0, 18))}</dd></dl>
       <div class="form-grid"><div class="field"><label>Deposit / transfer reference</label><input class="input" name="payRef" value="${esc(d.payRef || '')}" placeholder="e.g. BOC-123456"></div>
-      <div class="field"><label>Payment method</label><select class="input" name="payMethod"><option>Bank deposit</option><option>Online transfer</option><option>Cash to agent</option></select></div>
+      <div class="field"><label>Payment method</label><select class="input" name="payMethod"><option value="Bank deposit">Bank deposit</option><option value="Online transfer">Online transfer</option><option value="Cash to agent">Cash to agent</option></select></div>
       <div class="field full"><label>Deposit slip (optional)</label><label class="upload-drop">${icon('doc')} Choose a photo of the slip<input type="file" id="slipFile" accept="image/*" class="sr"></label><div id="slipPrev">${d.slip ? `<img src="${d.slip}" alt="" style="max-height:160px;border-radius:8px">` : ''}</div></div></div>
       <p style="margin-top:12px"><a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(agentUser?.phone || '', `Hello ${agentUser?.name || ''}, I have applied to open "${d.shopName}" on Pittala.lk and paid the registration fee. Reference: `)}">${icon('wa')} Tell the agent on WhatsApp</a></p>`;
   if (step === 5) {
     const s = Store.shop(reg.createdShopId);
-    body = `<div style="text-align:center;padding:10px 0 20px"><h2>Application submitted</h2><p class="muted" style="margin-top:8px">${esc(s?.name || '')} is with the region agent for payment verification.</p></div>
+    body = `<div style="text-align:center;padding:10px 0 20px"><h2>Application submitted</h2><p class="muted" style="margin-top:8px">${esc(`${s?.name || ''} is with the region agent for payment verification.`)}</p></div>
       ${applicationPipeline(s)}
-      <div class="notice">Your login details have been emailed to <b>${esc(d.email)}</b>. You are signed in now: follow your application, add products and design your shop while you wait. Buyers will see your shop after final approval.</div>
+      <div class="notice">${esc(`Your login details have been emailed to ${d.email}. You are signed in now: follow your application, add products and design your shop while you wait. Buyers will see your shop after final approval.`)}</div>
       <a class="btn btn-dark" href="#/dashboard">Go to my application</a>`;
   }
 
@@ -407,7 +427,7 @@ function submitApplication() {
   Store.s.shops.push({
     id: sid, name: d.shopName.trim(), ownerId: uid, regionId: d.regionId, status: 'pending_payment',
     color: THEME_COLORS[Math.floor(Math.random() * THEME_COLORS.length)], banner: BANNERS[Math.floor(Math.random() * BANNERS.length)],
-    tagline: d.tagline.trim(), story: '', phone: d.phone, whatsapp: d.whatsapp, email: d.email.trim(), address: d.address.trim(),
+    tagline: d.tagline.trim(), story: '', name_si: (d.shopName_si || '').trim(), tagline_si: (d.tagline_si || '').trim(), phone: d.phone, whatsapp: d.whatsapp, email: d.email.trim(), address: d.address.trim(),
     est: +d.est || new Date().getFullYear(), artisans: +d.artisans || 1, hours: 'Mon–Sat', layout: 'classic', font: 'engraved', announcement: '', rating: 0, cats: d.cats || [],
     createdAt: Date.now(), agreement: { signedName: d.signedName.trim(), rate: st.agentRate + st.platformRate, signedAt: Date.now(), version: '2026.1' },
     payment: { ref: d.payRef.trim(), method: d.payMethod, amount: st.regFee, at: Date.now(), slip: d.slip || '' }, approvals: {}

@@ -16,7 +16,7 @@ function shopBadges(shop) {
   return b;
 }
 const badgeRow = shop => `<div class="badges">${shopBadges(shop).map(([c, t]) => `<span class="badge ${c}">${esc(t)}</span>`).join('')}</div>`;
-const sectionHead = (title, sub = '', more = '') => `<div class="sec-head"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div>${more}</div>`;
+const sectionHead = (title, sub = '', more = '') => `<div class="sec-head reveal"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div>${more}</div>`;
 
 /* =================== HOME =================== */
 Pages.home = () => {
@@ -24,111 +24,159 @@ Pages.home = () => {
   const deals = prods.filter(p => Store.isFlash(p) && !Store.soldOut(p)).sort((a, b) => a.dealEnds - b.dealEnds);
   const allDeals = prods.filter(p => Store.dealActive(p) && !Store.soldOut(p)).sort((a, b) => b.discount - a.discount);
   const trending = [...prods].sort((a, b) => b.sold - a.sold).slice(0, 10);
-  const lamps = prods.filter(p => p.category === 'oil-lamps');
   const pooja = prods.filter(p => ['pooja', 'karaduwa', 'buddha'].includes(p.category)).sort((a, b) => b.sold - a.sold).slice(0, 10);
   const newest = [...prods].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
   const recent = Store.s.recent.map(id => Store.product(id)).filter(Boolean).slice(0, 10);
-  const shops = Store.publishedShops().map(s => ({ s, st: Store.shopStats(s.id, 30), prods: prods.filter(p => p.shopId === s.id) })).sort((a, b) => b.st.revenue - a.st.revenue);
+  const shops = Store.publishedShops().map(s => ({ s, st: Store.shopStats(s.id, 30), prods: prods.filter(p => p.shopId === s.id) })).sort((a, b) => (b.s.rating || 0) - (a.s.rating || 0));
   const totalSold = prods.reduce((a, p) => a + p.sold, 0);
+  const artisans = Store.publishedShops().reduce((a, s) => a + (s.artisans || 0), 0);
+  const st = Store.s.settings;
 
   onMount(mountCarousel);
+  onMount(mountHome);
 
   return `
+  <section class="vhero" aria-label="Pilimathalawa brass">
+    <video autoplay muted loop playsinline preload="auto" poster="${PW.lampsTemple}"><source src="${VIDEOS.templeLamp}" type="video/mp4"></video>
+    <div class="embers" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 53) % 100}%;animation-duration:${7 + (i % 5) * 1.6}s;animation-delay:${(i * 0.7) % 9}s;--dx:${(i % 2 ? 1 : -1) * (10 + i * 3)}px"></i>`).join('')}</div>
+    <div class="frame" aria-hidden="true"></div>
+    <div class="wrap"><div class="inner anim-in">
+      <div class="si-title" data-notr>පිළිමතලාව පාරම්පරික පිත්තල</div>
+      <h1>Hand-made brass from the village of Pilimathalawa</h1>
+      <p class="lede">Pahan, karaduwa, Buddha statues and pooja items, cast and polished by family workshops near Kandy. Buy direct from the makers and pay in cash when it arrives.</p>
+      <form class="hero-search" onsubmit="event.preventDefault();location.hash='#/shop?q='+encodeURIComponent(this.elements.hq.value)"><input name="hq" placeholder="What are you looking for? Try “pahana”" aria-label="Search"><button class="btn btn-brass">Search</button></form>
+      <div class="cta"><a class="btn btn-gold btn-lg" href="#/shop">Shop the collection</a><a class="btn btn-ghost btn-lg" href="#/deals">${icon('bolt')} Today’s deals</a></div>
+      <div class="stats"><div><b data-count="${Store.publishedShops().length}">0</b><span>family workshops</span></div><div><b data-count="${artisans}">0</b><span>artisans</span></div><div><b data-count="${totalSold}">0</b><span>pieces sold</span></div></div>
+    </div></div>
+    <div class="scroll-cue" aria-hidden="true"></div>
+  </section>
+
+  <div class="ticker" aria-label="Highlights"><div class="track">${[0, 1].map(() => ['Cash on delivery islandwide', 'Hand-made in Pilimathalawa', `Free delivery over ${money(st.freeDeliveryOver)}`, 'Every order confirmed on WhatsApp', 'Vesak and Poson collections', 'Avurudu pahan and kendiya', 'Wedding punkalasa and heppuwa'].map(t => `<span>${t}</span>`).join('')).join('')}</div></div>
+
   <div class="wrap">
-    <section class="hero" aria-label="Featured">
-      <div class="carousel" id="carousel">
+    <section class="block" style="padding-top:44px">
+      ${ornTitle('Shop by category', 'Traditional udarata brassware, each made by specialists in the village')}
+      <div class="cat-rail">${CATEGORIES.map((c, i) => `<a class="cat reveal" style="--d:${i * 0.06}s" href="#/shop?cat=${c.id}"><div class="ring"><img src="${esc(c.img)}" alt="" loading="lazy"></div><b>${esc(L(c, 'name'))}</b><small class="si" data-notr>${esc(isSi() ? c.name : c.si)}</small></a>`).join('')}</div>
+    </section>
+  </div>
+
+  ${allDeals.length ? `<section class="block deals-band"><div class="wrap">
+    <div class="sec-head reveal"><div class="deal-head"><h2>${icon('bolt')} Daily deals</h2>${deals[0] ? `<span class="ends">Next deal ends in <b data-countdown="${deals[0].dealEnds}">${countdownText(deals[0].dealEnds)}</b></span>` : ''}</div><a class="link-more" href="#/deals">See all deals</a></div>
+    <div class="hscroll reveal">${allDeals.map(p => productCard(p)).join('')}</div>
+  </div></section>` : ''}
+
+  <div class="wrap">
+    <section class="block">
+      ${ornTitle('Seasonal collections')}
+      <div class="carousel reveal" id="carousel">
         ${HERO_SLIDES.map((s, i) => `<div class="slide ${i === 0 ? 'on' : ''}" style="--slide-bg:${s.bg}" aria-hidden="${i ? 'true' : 'false'}">
           <div class="slide-text" style="background:${s.bg}"><span class="kicker">${esc(s.kicker)}</span><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p><a class="btn" href="${s.href}">${esc(s.cta)}</a></div>
-          <div class="slide-img"><img src="${esc(s.img)}" alt="" ${i ? 'loading="lazy"' : ''}></div>
+          <div class="slide-img"><img src="${esc(s.img)}" alt="" loading="lazy"></div>
         </div>`).join('')}
         <div class="car-dots">${HERO_SLIDES.map((_, i) => `<button class="${i === 0 ? 'on' : ''}" data-slide="${i}" aria-label="Slide ${i + 1}"></button>`).join('')}</div>
         <div class="car-nav"><button data-dir="-1" aria-label="Previous slide">‹</button><button data-dir="1" aria-label="Next slide">›</button></div>
       </div>
     </section>
 
-    <section class="block" style="padding-top:22px">
-      <div class="trustbar">
-        <div>${icon('coins')}<span><b>Cash on delivery</b><small>Pay when it arrives</small></span></div>
-        <div>${icon('truck')}<span><b>Islandwide delivery</b><small>Free over ${moneyShort(Store.s.settings.freeDeliveryOver)}</small></span></div>
-        <div>${icon('shield')}<span><b>Verified workshops</b><small>Approved by region agent</small></span></div>
-        <div>${icon('wa')}<span><b>Confirmed on WhatsApp</b><small>Before every dispatch</small></span></div>
-      </div>
-    </section>
-
-    <section class="block" style="padding-top:6px">
-      ${sectionHead('Shop by category')}
-      <div class="cat-rail">${CATEGORIES.map(c => `<a class="cat" href="#/shop?cat=${c.id}"><div class="ring"><img src="${esc(c.img)}" alt="" loading="lazy"></div><b>${esc(c.name)}</b><small class="si">${esc(c.si)}</small></a>`).join('')}</div>
+    <section class="block" style="padding-top:0">
+      ${sectionHead('Trending in Pilimathalawa brass', 'The most-ordered pieces this month', '<a class="link-more" href="#/shop?sort=popular">See all</a>')}
+      <div class="hscroll reveal">${trending.map(p => productCard(p)).join('')}</div>
     </section>
   </div>
 
-  ${allDeals.length ? `<section class="block deals-band"><div class="wrap">
-    <div class="sec-head"><div class="deal-head"><h2>${icon('bolt')} Daily deals</h2>${deals[0] ? `<span class="ends">Next deal ends in <b data-countdown="${deals[0].dealEnds}">${countdownText(deals[0].dealEnds)}</b></span>` : ''}</div><a class="link-more" href="#/deals">See all deals</a></div>
-    <div class="hscroll">${allDeals.map(p => productCard(p)).join('')}</div>
-  </div></section>` : ''}
+  <section class="block patterned">
+    <div class="wrap">
+      ${ornTitle('From the brass village', 'Where every lamp begins: the temples and workshops around Pilimathalawa and Kandy')}
+      <div class="vstory reveal">
+        <div class="vid"><video autoplay muted loop playsinline preload="metadata" poster="${PW.gadaladeniya}"><source src="${VIDEOS.buddhistTemple}" type="video/mp4"></video></div>
+        <div class="txt">
+          <h2>Made by hand, the old udarata way</h2>
+          <p>Pilimathalawa lies on the old road from Kandy to Kadugannawa, close to the Gadaladeniya, Lankathilaka and Embekka temples. Brass workers here have made pahan, karaduwa and pooja items for viharas and homes for generations.</p>
+          <p>Molten brass is poured into sand moulds, then filed, chased with liyawela and lotus patterns, and polished to a golden shine.</p>
+          <a class="btn btn-brass" href="#/about">Read the story</a> <a class="btn btn-ghost" href="#/stores">Meet the workshops</a>
+        </div>
+      </div>
+      <div class="reel">
+        ${[[VIDEOS.templeLamp, PW.lampsTemple, 'Pahan lit at the vihara'], [VIDEOS.rockTemple, PW.templeFacade, 'Temples of the hill country'], [VIDEOS.lakeTemple, PW.bahiravokanda, 'Sacred places of Sri Lanka']].map(([v, p, c], i) => `<figure class="reveal" style="--d:${i * 0.12}s"><video muted loop playsinline preload="none" poster="${p}" data-hoverplay><source src="${v}" type="video/mp4"></video><figcaption>${c}</figcaption></figure>`).join('')}
+      </div>
+    </div>
+  </section>
 
   <div class="wrap">
     <section class="block">
-      ${sectionHead('Trending in Pilimathalawa brass', 'The most-ordered pieces this month', '<a class="link-more" href="#/shop?sort=popular">See all</a>')}
-      <div class="hscroll">${trending.map(p => productCard(p)).join('')}</div>
-    </section>
-
-    <section class="block" style="padding-top:0">
       <div class="promo-row">
-        <a class="promo" href="#/shop?cat=oil-lamps"><img src="${PW.lampsTemple}" alt="" loading="lazy"><div><b>Pahan for every occasion</b><span>${lamps.length} oil lamps from ${new Set(lamps.map(p => p.shopId)).size} workshops</span></div></a>
-        <a class="promo" href="#/shop?cat=pooja"><img src="${PW.offering}" alt="" loading="lazy"><div><b>For the shrine room</b><span>Heppuwa, paththara, punkalasa and bells</span></div></a>
-        <a class="promo" href="#/shop?cat=karaduwa"><img src="${PW.daladaMaligawa}" alt="" loading="lazy"><div><b>Vesak & Poson</b><span>Karaduwa, Buddha statues and gifts</span></div></a>
+        <a class="promo reveal" href="#/shop?cat=oil-lamps"><img src="${PW.lampsTemple}" alt="" loading="lazy"><div><b>Pahan for every occasion</b><span>Standing, hanging and table lamps</span></div></a>
+        <a class="promo reveal" style="--d:.1s" href="#/shop?cat=pooja"><img src="${PW.offering}" alt="" loading="lazy"><div><b>For the shrine room</b><span>Heppuwa, paththara, punkalasa and bells</span></div></a>
+        <a class="promo reveal" style="--d:.2s" href="#/shop?cat=karaduwa"><img src="${PW.daladaMaligawa}" alt="" loading="lazy"><div><b>Vesak & Poson</b><span>Karaduwa, Buddha statues and gifts</span></div></a>
       </div>
     </section>
 
     <section class="block" style="padding-top:0">
       ${sectionHead('For the temple and shrine room', '', '<a class="link-more" href="#/shop?cat=pooja">See all</a>')}
-      <div class="hscroll">${pooja.map(p => productCard(p)).join('')}</div>
+      <div class="hscroll reveal">${pooja.map(p => productCard(p)).join('')}</div>
+    </section>
+
+    <section class="block" style="padding-top:10px">
+      ${ornTitle('Featured workshops', 'Family workshops of Pilimathalawa, verified by the region agent')}
+      <div class="seller-row">${shops.slice(0, 4).map((x, i) => storeCard(x, i)).join('')}</div>
     </section>
 
     <section class="block" style="padding-top:0">
-      ${sectionHead('Top workshops this month', 'Ranked by sales. Better prices, deals and photos move shops up.', '<a class="link-more" href="#/stores">All shops</a>')}
-      <div class="seller-row">${shops.slice(0, 4).map(x => storeCard(x)).join('')}</div>
-    </section>
-
-    <section class="block" style="padding-top:0">
-      <div class="story">
-        <div class="story-img"><img src="${PW.gadaladeniya}" alt="Gadaladeniya temple near Pilimathalawa" loading="lazy"></div>
-        <div class="story-text">
-          <h2>From the brass village of Pilimathalawa</h2>
-          <p>Pilimathalawa, on the old road between Kandy and Kadugannawa near the Gadaladeniya and Embekka temples, has been known for traditional udarata brassware for generations. Families here still cast, chase and polish every piece by hand.</p>
-          <p>Pittala.lk lets you buy straight from those workshops, at the price the maker sets.</p>
-          <div class="story-stats"><div><b>${Store.publishedShops().length}</b><span>workshops online</span></div><div><b>${Store.publishedShops().reduce((a, s) => a + (s.artisans || 0), 0)}</b><span>artisans</span></div><div><b>${totalSold.toLocaleString()}</b><span>pieces sold</span></div></div>
-          <a class="btn btn-brass" href="#/about">Read more</a>
-        </div>
+      <div class="trustbar reveal">
+        <div>${icon('coins')}<span><b>Cash on delivery</b><small>Pay when it arrives</small></span></div>
+        <div>${icon('truck')}<span><b>Islandwide delivery</b><small>Free over ${moneyShort(st.freeDeliveryOver)}</small></span></div>
+        <div>${icon('shield')}<span><b>Verified workshops</b><small>Approved by region agent</small></span></div>
+        <div>${icon('wa')}<span><b>Confirmed on WhatsApp</b><small>Before every dispatch</small></span></div>
       </div>
     </section>
 
     <section class="block" style="padding-top:0">
       ${sectionHead('New listings', '', '<a class="link-more" href="#/shop?sort=new">See all</a>')}
-      <div class="hscroll">${newest.map(p => productCard(p)).join('')}</div>
+      <div class="hscroll reveal">${newest.map(p => productCard(p)).join('')}</div>
     </section>
 
     ${recent.length ? `<section class="block" style="padding-top:0">${sectionHead('Your recently viewed items')}<div class="hscroll">${recent.map(p => productCard(p)).join('')}</div></section>` : ''}
 
     <section class="block" style="padding-top:0">
-      <div class="sellbox">
+      <div class="sellbox reveal">
         <div><h2>Own a brass workshop in Pilimathalawa?</h2><p>Open your shop on Pittala, list your pieces with photos, run deals and take cash-on-delivery orders from anywhere in Sri Lanka. You only pay commission when you sell.</p>
-          <div class="row-actions" style="margin-top:16px"><a class="btn btn-brass" href="#/register">Register your shop</a><a class="btn btn-ghost" href="#/sell">How it works</a></div></div>
-        ${commissionVisual(Store.s.settings)}
+          <div class="row-actions" style="margin-top:16px"><a class="btn btn-gold" href="#/register">Register your shop</a><a class="btn btn-ghost" href="#/sell">How it works</a></div></div>
+        ${commissionVisual(st)}
       </div>
     </section>
 
-    <section class="block" style="padding-top:0">
-      ${sectionHead('What buyers say')}
-      <div class="quotes">${Store.s.reviews.slice(0, 3).map(r => { const p = Store.product(r.productId); return `<blockquote class="quote"><div>${stars(r.rating)}</div><p>“${esc(r.text)}”</p><footer>${esc(r.name)} · <a class="link" href="#/product/${p.id}">${esc(p.name)}</a></footer></blockquote>`; }).join('')}</div>
+    <section class="block" style="padding-top:10px">
+      ${ornTitle('What buyers say')}
+      <div class="quotes">${Store.s.reviews.slice(0, 3).map((r, i) => { const p = Store.product(r.productId); return `<blockquote class="quote reveal" style="--d:${i * 0.1}s"><div>${stars(r.rating)}</div><p>“${esc(r.text)}”</p><footer>${esc(L(r, 'name'))} · <a class="link" href="#/product/${p.id}">${esc(L(p, 'name'))}</a></footer></blockquote>`; }).join('')}</div>
     </section>
   </div>`;
 };
 
-function storeCard({ s, st, prods }) {
-  return `<a class="store-card" href="#/store/${s.id}" style="--shop-c:${esc(s.color)}">
+function mountHome() {
+  // count-up numbers in the hero
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = +el.dataset.count; const t0 = performance.now(); const dur = 1600;
+    const step = now => { const k = Math.min(1, (now - t0) / dur); el.textContent = Math.round(target * (1 - Math.pow(1 - k, 3))).toLocaleString(); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+  // short reel videos play on hover (or when visible on touch screens)
+  const touch = window.matchMedia('(hover: none)').matches;
+  document.querySelectorAll('[data-hoverplay]').forEach(v => {
+    const fig = v.closest('figure');
+    if (touch) {
+      const io = new IntersectionObserver(es => es.forEach(e => { e.isIntersecting ? v.play().catch(() => {}) : v.pause(); }), { threshold: .6 });
+      io.observe(v); onCleanup(() => io.disconnect());
+    } else {
+      fig.addEventListener('mouseenter', () => v.play().catch(() => {}));
+      fig.addEventListener('mouseleave', () => v.pause());
+    }
+  });
+}
+
+function storeCard({ s, st, prods }, i = 0) {
+  return `<a class="store-card reveal" href="#/store/${s.id}" style="--shop-c:${esc(s.color)};--d:${(i % 4) * 0.08}s">
     <div class="cover"><img src="${esc(s.banner)}" alt="" loading="lazy"></div>
-    <div class="body">${shopLogo(s)}<h3>${esc(s.name)}</h3><small class="muted">${esc(s.tagline)}</small>
+    <div class="body">${shopLogo(s)}<h3>${esc(L(s, 'name'))}</h3><small class="muted">${esc(L(s, 'tagline'))}</small>
       <span class="feedback"><b>${feedbackPct(s) || '—'}%</b> positive feedback · ${st.orders} orders this month</span>
       <div class="thumbs-row">${prods.slice(0, 3).map(p => `<img src="${esc(p.images[0])}" alt="" loading="lazy">`).join('')}</div>
     </div></a>`;
@@ -185,7 +233,7 @@ Pages.shop = (q) => {
   const shopsSel = (q.shops || '').split(',').filter(Boolean);
   const words = term.split(/\s+/).filter(Boolean);
   let list = all.filter(p => {
-    const hay = (p.name + ' ' + p.description + ' ' + Store.cat(p.category).name + ' ' + Store.shop(p.shopId).name).toLowerCase();
+    const hay = (p.name + ' ' + (p.name_si || '') + ' ' + p.description + ' ' + (p.description_si || '') + ' ' + Store.cat(p.category).name + ' ' + (Store.cat(p.category).name_si || '') + ' ' + Store.shop(p.shopId).name + ' ' + (Store.shop(p.shopId).name_si || '')).toLowerCase();
     return (!cat || p.category === cat) && words.every(w => hay.includes(w))
       && (!shopsSel.length || shopsSel.includes(p.shopId))
       && (!q.deals || Store.dealActive(p)) && (!q.instock || !Store.soldOut(p))
@@ -228,14 +276,14 @@ Pages.shop = (q) => {
 
   return `<div class="wrap">
     <div class="page-head">
-      <div class="crumbs"><a href="#/">Home</a> › ${c ? `<a href="#/shop">All categories</a> › ${esc(c.name)}` : 'All categories'}</div>
+      <div class="crumbs"><a href="#/">Home</a> › ${c ? `<a href="#/shop">All categories</a> › ${esc(L(c, 'name'))}` : 'All categories'}</div>
       <h1>${c ? esc(c.name) : term ? `Results for “${esc(q.q)}”` : 'All Pilimathalawa brass'}</h1>
     </div>
     <div class="shop-layout">
       <form class="filters" id="filterForm">
         <div class="fgroup"><h4>Category</h4>
           <a class="flink ${!cat ? 'on' : ''}" href="${link({ cat: '' })}">All categories</a>
-          ${CATEGORIES.map(x => `<a class="flink ${cat === x.id ? 'on' : ''}" href="${link({ cat: x.id })}">${esc(x.name)} <span class="muted">(${countIn(x.id)})</span></a>`).join('')}
+          ${CATEGORIES.map(x => `<a class="flink ${cat === x.id ? 'on' : ''}" href="${link({ cat: x.id })}">${esc(L(x, 'name'))} <span class="muted">(${countIn(x.id)})</span></a>`).join('')}
         </div>
         <div class="fgroup"><h4>Price</h4>
           <div style="display:flex;gap:6px;align-items:center"><input class="input" name="min" type="number" min="0" placeholder="Rs. min" value="${esc(q.min || '')}" style="min-height:36px"><span>to</span><input class="input" name="max" type="number" min="0" placeholder="Rs. max" value="${esc(q.max || '')}" style="min-height:36px"></div>
@@ -250,12 +298,12 @@ Pages.shop = (q) => {
           ${[['', 'Any'], ['natural', 'Natural brass'], ['gold', 'Gold plated'], ['antique', 'Antique']].map(([v, l]) => `<label class="chk"><input type="radio" name="finish" value="${v}" ${(q.finish || '') === v ? 'checked' : ''}> ${l}</label>`).join('')}
         </div>
         <div class="fgroup" style="border:0"><h4>Seller</h4>
-          ${Store.publishedShops().map(s => `<label class="chk"><input type="checkbox" name="shop" value="${s.id}" ${shopsSel.includes(s.id) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('')}
+          ${Store.publishedShops().map(s => `<label class="chk"><input type="checkbox" name="shop" value="${s.id}" ${shopsSel.includes(s.id) ? 'checked' : ''}> ${esc(L(s, 'name'))}</label>`).join('')}
         </div>
       </form>
       <div>
         <div class="result-bar">
-          <span><b>${list.length}</b> results${c ? ` in ${esc(c.name)}` : ''} <button type="button" class="btn btn-ghost btn-sm" id="toggleFilters" style="margin-left:8px">Filters</button></span>
+          <span><b>${list.length}</b> results${c ? ` in ${esc(L(c, 'name'))}` : ''} <button type="button" class="btn btn-ghost btn-sm" id="toggleFilters" style="margin-left:8px">Filters</button></span>
           <div class="sort">
             <label for="sortSel">Sort:</label>
             <select id="sortSel" onchange="location.hash='${link({ sort: '' }).replace(/'/g, "\\'")}&sort='+this.value">
@@ -292,8 +340,8 @@ Pages.product = (q, id) => {
   const more = Store.liveProducts().filter(x => x.shopId === p.shopId && x.id !== p.id).slice(0, 10);
   const shopSold = Store.s.products.filter(x => x.shopId === shop.id).reduce((a, x) => a + x.sold, 0);
   const free = price >= st.freeDeliveryOver;
-  const eta = new Date(Date.now() + 3 * 864e5).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-  const eta2 = new Date(Date.now() + 6 * 864e5).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  const eta = fmtDay(Date.now() + 3 * 864e5);
+  const eta2 = fmtDay(Date.now() + 6 * 864e5);
 
   onMount(() => {
     const main = document.getElementById('gMain');
@@ -322,20 +370,20 @@ Pages.product = (q, id) => {
 
   const tabBase = `#/product/${p.id}?tab=`;
   return `<div class="wrap">
-    <div class="page-head" style="padding-bottom:8px"><div class="crumbs"><a href="#/">Home</a> › <a href="#/shop?cat=${p.category}">${esc(Store.cat(p.category).name)}</a> › ${esc(p.name)}</div></div>
+    <div class="page-head" style="padding-bottom:8px"><div class="crumbs"><a href="#/">Home</a> › <a href="#/shop?cat=${p.category}">${esc(L(Store.cat(p.category), 'name'))}</a> › ${esc(L(p, 'name'))}</div></div>
     <div class="pdp">
       <div class="gallery">
         <div class="thumbs">${p.images.map((im, i) => `<button data-thumb="${esc(im)}" class="${i ? '' : 'on'}" aria-label="Photo ${i + 1}"><img src="${esc(im)}" alt=""></button>`).join('')}</div>
-        <div class="gallery-main" id="gMain" title="Click to zoom"><img src="${esc(p.images[0])}" alt="${esc(p.name)}">${sold ? sealHTML(true) : ''}</div>
+        <div class="gallery-main" id="gMain" title="Click to zoom"><img src="${esc(p.images[0])}" alt="${esc(L(p, 'name'))}">${sold ? sealHTML(true) : ''}</div>
       </div>
       <div class="pdp-info">
-        <h1>${esc(p.name)}</h1>
+        <h1>${esc(L(p, 'name'))}</h1>
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.9rem">
           <a href="${tabBase}reviews" class="rating">${stars(p.rating)} <span class="link">${p.reviews} product ratings</span></a>
           ${p.sold ? `<span class="sold-line ${p.sold >= 40 ? 'hot' : ''}">${p.sold} sold</span>` : ''}
           ${p.views > 300 ? `<span class="muted">${Math.round(p.views / 30)} viewed in the last 24 hours</span>` : ''}
         </div>
-        <div class="seller-box">${shopLogo(shop)}<div style="flex:1"><b><a href="#/store/${shop.id}">${esc(shop.name)}</a></b> <span class="muted">(${shopSold.toLocaleString()})</span><br><span class="feedback"><b>${feedbackPct(shop)}%</b> positive feedback</span></div>
+        <div class="seller-box">${shopLogo(shop)}<div style="flex:1"><b><a href="#/store/${shop.id}">${esc(L(shop, 'name'))}</a></b> <span class="muted">(${shopSold.toLocaleString()})</span><br><span class="feedback"><b>${feedbackPct(shop)}%</b> positive feedback</span></div>
           <a class="btn btn-ghost btn-sm" href="#/store/${shop.id}">Seller's other items</a></div>
         <div class="pdp-price"><b>${money(price)}</b>${deal ? `<span class="muted">Was <s>${money(p.price)}</s></span><span class="save-pill">Save ${money(p.price - price)} (${p.discount}% off)</span>` : ''}</div>
         ${Store.isFlash(p) && !sold ? `<div class="deal-box"><span><b>Deal ends in</b><br><small class="muted">Price returns to ${money(p.price)} after the timer</small></span>${bigTimer(p.dealEnds)}</div>` : ''}
@@ -352,7 +400,7 @@ Pages.product = (q, id) => {
           <button class="btn btn-ghost" data-action="wish" data-id="${p.id}">${icon('heart')} ${Store.s.wishlist.includes(p.id) ? 'Watching this item' : 'Add to watchlist'}</button>
         </div>
         <dl class="kv">
-          <dt>Delivery</dt><dd>${free ? '<b class="ship free">Free delivery</b>' : `<b>${money(st.deliveryKandy)}</b> in Kandy district, <b>${money(st.deliveryOther)}</b> elsewhere`}<br><span class="muted">Estimated between <b>${eta}</b> and <b>${eta2}</b></span></dd>
+          <dt>Delivery</dt><dd>${free ? '<b class="ship free">Free delivery</b>' : `<b>${esc(`${money(st.deliveryKandy)} in Kandy district, ${money(st.deliveryOther)} elsewhere`)}</b>`}<br><span class="muted">${esc(`Estimated between ${eta} and ${eta2}`)}</span></dd>
           <dt>Located in</dt><dd>${esc(shop.address)}</dd>
           <dt>Payment</dt><dd><span class="badge green">${icon('coins')} Cash on delivery</span> <span class="muted">The seller confirms with you on WhatsApp first.</span></dd>
           <dt>Questions</dt><dd><a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(shop.whatsapp, `Hello ${shop.name}, I'm interested in "${p.name}" (${money(price)}) on Pittala.lk. Is it available?`)}">${icon('wa')} Ask the seller on WhatsApp</a></dd>
@@ -363,26 +411,26 @@ Pages.product = (q, id) => {
     <div class="tabs" role="tablist">
       ${[['desc', 'Item description'], ['specs', 'Item specifics'], ['reviews', `Ratings & reviews (${reviews.length})`], ['ship', 'Delivery & returns']].map(([k, l]) => `<button role="tab" class="${tab === k ? 'on' : ''}" onclick="location.hash='${tabBase}${k}'">${l}</button>`).join('')}
     </div>
-    ${tab === 'desc' ? `<div class="dash-grid"><div><p style="font-size:1.02rem;max-width:72ch">${esc(p.description)}</p><p class="muted">Made by ${esc(shop.name)}, ${esc(shop.address)}. Every piece is finished by hand, so small variations in pattern and colour are normal.</p></div>
-      <a class="shop-mini" href="#/store/${shop.id}" style="align-self:start">${shopLogo(shop)}<div><b>${esc(shop.name)}</b><br><small class="muted">${esc(shop.tagline)}</small><div style="margin-top:6px">${badgeRow(shop)}</div></div></a></div>` : ''}
-    ${tab === 'specs' ? `<dl class="specs" style="max-width:640px"><dt>Category</dt><dd>${esc(Store.cat(p.category).name)}</dd><dt>Material</dt><dd>${esc(p.material)}</dd>${p.dimensions ? `<dt>Size</dt><dd>${esc(p.dimensions)}</dd>` : ''}${p.weight ? `<dt>Weight</dt><dd>${esc(p.weight)}</dd>` : ''}<dt>Finish</dt><dd>${esc(p.finish)}</dd><dt>Made in</dt><dd>Pilimathalawa, Kandy, Sri Lanka</dd><dt>Seller</dt><dd>${esc(shop.name)}</dd></dl>` : ''}
+    ${tab === 'desc' ? `<div class="dash-grid"><div><p style="font-size:1.02rem;max-width:72ch">${esc(L(p, 'description'))}</p><p class="muted">${esc(`Made by ${L(shop, 'name')}, ${shop.address}. Every piece is finished by hand, so small variations in pattern and colour are normal.`)}</p></div>
+      <a class="shop-mini" href="#/store/${shop.id}" style="align-self:start">${shopLogo(shop)}<div><b>${esc(L(shop, 'name'))}</b><br><small class="muted">${esc(L(shop, 'tagline'))}</small><div style="margin-top:6px">${badgeRow(shop)}</div></div></a></div>` : ''}
+    ${tab === 'specs' ? `<dl class="specs" style="max-width:640px"><dt>Category</dt><dd>${esc(L(Store.cat(p.category), 'name'))}</dd><dt>Material</dt><dd>${esc(p.material)}</dd>${p.dimensions ? `<dt>Size</dt><dd>${esc(p.dimensions)}</dd>` : ''}${p.weight ? `<dt>Weight</dt><dd>${esc(p.weight)}</dd>` : ''}<dt>Finish</dt><dd>${esc(p.finish)}</dd><dt>Made in</dt><dd>Pilimathalawa, Kandy, Sri Lanka</dd><dt>Seller</dt><dd>${esc(L(shop, 'name'))}</dd></dl>` : ''}
     ${tab === 'reviews' ? `<div class="dash-grid">
-        <div>${reviews.length ? reviews.map(r => `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between"><b>${esc(r.name)}</b><small class="muted">${fmtDate(r.at)}</small></div>${stars(r.rating)}<p style="margin:6px 0 0">${esc(r.text)}</p></div>`).join('') : '<p class="muted">No reviews yet. Bought this item? Tell other buyers how it turned out.</p>'}</div>
+        <div>${reviews.length ? reviews.map(r => `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between"><b>${esc(L(r, 'name'))}</b><small class="muted">${fmtDate(r.at)}</small></div>${stars(r.rating)}<p style="margin:6px 0 0">${esc(r.text)}</p></div>`).join('') : '<p class="muted">No reviews yet. Bought this item? Tell other buyers how it turned out.</p>'}</div>
         <form class="card" id="reviewForm"><h3>Write a review</h3>
           <div class="field"><label for="rn">Your name</label><input class="input" id="rn" name="name" required></div>
           <div class="field" style="margin-top:10px"><label for="rr">Rating</label><select class="input" id="rr" name="rating">${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${'★'.repeat(n)} ${n}</option>`).join('')}</select></div>
           <div class="field" style="margin-top:10px"><label for="rt">Review</label><textarea class="input" id="rt" name="text" required></textarea></div>
           <button class="btn btn-brass" style="margin-top:12px">Publish review</button>
         </form></div>` : ''}
-    ${tab === 'ship' ? `<div style="max-width:72ch"><p><b>Delivery:</b> ${money(st.deliveryKandy)} within Kandy district and ${money(st.deliveryOther)} to other districts. Free on orders over ${money(st.freeDeliveryOver)} from one shop.</p><p><b>Payment:</b> cash on delivery only. You pay the courier when the parcel reaches you.</p><p><b>Confirmation:</b> the seller contacts you on WhatsApp to confirm the order before dispatch.</p><p><b>Returns:</b> if an item arrives damaged, message the seller within 3 days with a photo.</p></div>` : ''}
+    ${tab === 'ship' ? `<div style="max-width:72ch"><p>${esc(`Delivery: ${money(st.deliveryKandy)} within Kandy district and ${money(st.deliveryOther)} to other districts. Free on orders over ${money(st.freeDeliveryOver)} from one shop.`)}</p><p>Payment: cash on delivery only. You pay the courier when the parcel reaches you.</p><p>Confirmation: the seller contacts you on WhatsApp to confirm the order before dispatch.</p><p>Returns: if an item arrives damaged, message the seller within 3 days with a photo.</p></div>` : ''}
 
     ${compare.length > 1 ? `<section class="block">
       ${sectionHead('Compare prices from other sellers', 'Same category, different workshops')}
       <div class="table-wrap"><table class="compare-table">
         <thead><tr><th>Item</th><th>Seller</th><th>Price</th><th>Rating</th><th>Availability</th><th></th></tr></thead>
         <tbody>${compare.slice(0, 6).map(x => { const s = Store.shop(x.shopId); return `<tr class="${x.id === p.id ? 'me' : ''}">
-          <td><a href="#/product/${x.id}" style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(x.images[0])}" alt="">${esc(x.name)}</a></td>
-          <td>${esc(s.name)}</td>
+          <td><a href="#/product/${x.id}" style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(x.images[0])}" alt="">${esc(L(x, 'name'))}</a></td>
+          <td>${esc(L(s, 'name'))}</td>
           <td><b>${money(Store.priceOf(x))}</b>${Store.dealActive(x) ? ` <span class="badge red">${x.discount}% off</span>` : ''}</td>
           <td>${stars(x.rating)}</td>
           <td>${Store.soldOut(x) ? '<span class="badge red">Sold out</span>' : `${x.stock} available`}</td>
@@ -390,26 +438,16 @@ Pages.product = (q, id) => {
       </table></div>
     </section>` : ''}
     ${rivals.length ? `<section class="block" style="padding-top:0">${sectionHead('Similar items from other sellers')}<div class="hscroll">${rivals.slice(0, 10).map(x => productCard(x)).join('')}</div></section>` : ''}
-    ${more.length ? `<section class="block" style="padding-top:0">${sectionHead(`More from ${esc(shop.name)}`, '', `<a class="link-more" href="#/store/${shop.id}">Visit shop</a>`)}<div class="hscroll">${more.map(x => productCard(x, { hideShop: true })).join('')}</div></section>` : ''}
+    ${more.length ? `<section class="block" style="padding-top:0">${sectionHead(`More from ${esc(L(shop, 'name'))}`, '', `<a class="link-more" href="#/store/${shop.id}">Visit shop</a>`)}<div class="hscroll">${more.map(x => productCard(x, { hideShop: true })).join('')}</div></section>` : ''}
   </div>`;
 };
 
 /* =================== SHOPS =================== */
 Pages.stores = () => {
   const shops = Store.publishedShops().map(s => ({ s, st: Store.shopStats(s.id, 30), prods: Store.liveProducts().filter(p => p.shopId === s.id) })).sort((a, b) => b.st.revenue - a.st.revenue);
-  const maxRev = Math.max(1, ...shops.map(b => b.st.revenue));
   return `<div class="wrap">
     <div class="page-head"><div class="crumbs"><a href="#/">Home</a> › Shops</div><h1>Workshops of Pilimathalawa</h1><p class="muted" style="margin:4px 0 0">Every shop is a family workshop in the village, approved by the region agent and the platform.</p></div>
-    <div class="seller-row" style="margin-bottom:34px">${shops.map(storeCard).join('')}</div>
-    ${sectionHead('Sales leaderboard', 'Last 30 days')}
-    <div class="board">
-      <div class="board-row head"><span>#</span><span>Shop</span><span>Sales, 30 days</span><span>Orders</span><span>Feedback</span><span></span></div>
-      ${shops.map((b, i) => `<div class="board-row"><span class="rank">${i + 1}</span>
-        <a class="shop-chip" href="#/store/${b.s.id}">${shopLogo(b.s)}<span><b>${esc(b.s.name)}</b><br><small class="muted">${esc(b.s.tagline)}</small></span></a>
-        <div><b>${moneyShort(b.st.revenue)}</b><div class="bar-mini"><i style="width:${Math.round(b.st.revenue / maxRev * 100)}%"></i></div></div>
-        <span>${b.st.orders}</span><span class="feedback"><b>${feedbackPct(b.s)}%</b></span>
-        <a class="btn btn-ghost btn-sm" href="#/store/${b.s.id}">Visit</a></div>`).join('')}
-    </div>
+    <div class="seller-row" style="margin-bottom:34px">${shops.map((x, i) => storeCard(x, i)).join('')}</div>
   </div>`;
 };
 
@@ -432,29 +470,29 @@ Pages.store = (q, id) => {
       <section class="store-hero"><img src="${esc(s.banner)}" alt=""></section>
       <div class="store-head f-${esc(s.font)}">
         <div class="store-logo">${esc(initials(s.name))}</div>
-        <div><h1>${esc(s.name)}</h1><div>${esc(s.tagline)}</div>
+        <div><h1>${esc(L(s, 'name'))}</h1><div>${esc(L(s, 'tagline'))}</div>
           <div class="store-meta"><span class="feedback"><b>${feedbackPct(s) || '—'}%</b> positive feedback</span><span>${sold.toLocaleString()} items sold</span><span>Est. ${esc(s.est)}</span><span>${esc(s.address)}</span></div></div>
         <div class="store-actions">
           <a class="btn btn-wa" target="_blank" rel="noopener" href="${waLink(s.whatsapp, `Hello ${s.name}, I found your shop on Pittala.lk.`)}">${icon('wa')} Contact on WhatsApp</a>
           <a class="btn btn-ghost" href="tel:${esc(s.phone)}">Call ${esc(s.phone)}</a>
         </div>
       </div>
-      ${s.announcement ? `<div class="store-announce">${esc(s.announcement)}</div>` : ''}
+      ${s.announcement ? `<div class="store-announce">${esc(L(s, 'announcement'))}</div>` : ''}
       <div style="margin-top:14px">${badgeRow(s)}</div>
       <div class="tabs" role="tablist">
         ${[['products', `Shop (${prods.length})`], ['deals', 'Deals & coupons'], ['about', 'About'], ['reviews', `Feedback (${reviews.length})`]].map(([k, l]) => `<button role="tab" class="${tab === k ? 'on' : ''}" onclick="location.hash='${base}tab=${k}'">${l}</button>`).join('')}
       </div>
       <div class="layout-${esc(s.layout)}">
       ${tab === 'products' ? `
-        <div class="chips" style="margin-bottom:18px"><a class="chip ${!cat ? 'on' : ''}" href="${base}tab=products">All items</a>${cats.map(c => `<a class="chip ${cat === c ? 'on' : ''}" href="${base}tab=products&cat=${c}">${esc(Store.cat(c).name)}</a>`).join('')}</div>
+        <div class="chips" style="margin-bottom:18px"><a class="chip ${!cat ? 'on' : ''}" href="${base}tab=products">All items</a>${cats.map(c => `<a class="chip ${cat === c ? 'on' : ''}" href="${base}tab=products&cat=${c}">${esc(L(Store.cat(c), 'name'))}</a>`).join('')}</div>
         ${list.length ? `<div class="grid">${list.map(p => productCard(p, { hideShop: true })).join('')}</div>` : '<div class="empty card"><h3>No items listed yet</h3></div>'}` : ''}
       ${tab === 'deals' ? `
         ${coupons.length ? `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin-bottom:24px">${coupons.map(couponCard).join('')}</div>` : ''}
         ${prods.filter(p => Store.dealActive(p)).length ? `<div class="grid">${prods.filter(p => Store.dealActive(p)).map(p => productCard(p, { hideShop: true })).join('')}</div>` : '<div class="empty card"><h3>No deals running right now</h3><p>Add items to your watchlist to catch the next one.</p></div>'}` : ''}
-      ${tab === 'about' ? `<div class="dash-grid"><div class="card"><h3>About ${esc(s.name)}</h3><p style="font-size:1.02rem">${esc(s.story)}</p></div>
+      ${tab === 'about' ? `<div class="dash-grid"><div class="card"><h3>About ${esc(L(s, 'name'))}</h3><p style="font-size:1.02rem">${esc(L(s, 'story'))}</p></div>
         <div class="card"><h3>Visit or call</h3><dl class="specs" style="grid-template-columns:110px 1fr"><dt>Address</dt><dd>${esc(s.address)}</dd><dt>Hours</dt><dd>${esc(s.hours)}</dd><dt>Phone</dt><dd>${esc(s.phone)}</dd><dt>Artisans</dt><dd>${esc(s.artisans)}</dd><dt>Established</dt><dd>${esc(s.est)}</dd></dl>
         <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/search/${encodeURIComponent(s.address + ', Sri Lanka')}">${icon('map')} Open in Google Maps</a></div></div>` : ''}
-      ${tab === 'reviews' ? `<div class="card">${reviews.length ? reviews.map(r => { const p = Store.product(r.productId); return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${esc(r.name)}</b> ${stars(r.rating)} <small class="muted">${fmtDate(r.at)}</small><br><small>on <a class="link" href="#/product/${p.id}">${esc(p.name)}</a></small><p style="margin:6px 0 0">${esc(r.text)}</p></div>`; }).join('') : '<p class="muted">No feedback yet.</p>'}</div>` : ''}
+      ${tab === 'reviews' ? `<div class="card">${reviews.length ? reviews.map(r => { const p = Store.product(r.productId); return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${esc(L(r, 'name'))}</b> ${stars(r.rating)} <small class="muted">${fmtDate(r.at)}</small><br><small>on <a class="link" href="#/product/${p.id}">${esc(L(p, 'name'))}</a></small><p style="margin:6px 0 0">${esc(r.text)}</p></div>`; }).join('') : '<p class="muted">No feedback yet.</p>'}</div>` : ''}
       </div>
       ${rivals.length ? `<section class="block">${sectionHead('Other shops making similar items')}
         <div class="seller-row">${rivals.slice(0, 4).map(x => storeCard({ s: x, st: Store.shopStats(x.id), prods: Store.liveProducts().filter(p => p.shopId === x.id) })).join('')}</div></section>` : ''}
@@ -465,7 +503,7 @@ Pages.store = (q, id) => {
 function couponCard(c) {
   const s = Store.shop(c.shopId);
   return `<div class="card" style="border:2px dashed var(--gold);display:grid;gap:4px">
-    <small class="muted">${esc(s.name)}</small>
+    <small class="muted">${esc(L(s, 'name'))}</small>
     <b style="font-size:1.5rem;color:var(--maroon)">${c.type === 'pct' ? `${c.value}% off` : `${money(c.value)} off`}</b>
     <small>On orders over ${money(c.minOrder)} · ends ${fmtDate(c.expires)}</small>
     <button class="btn btn-ghost btn-sm" data-action="copy" data-text="${esc(c.code)}" style="margin-top:6px">${icon('copy')} Copy code <b>${esc(c.code)}</b></button>
@@ -488,12 +526,12 @@ Pages.deals = (q) => {
     ${flash.length ? `<section class="block" style="padding-top:10px">${sectionHead('Ending soon')}<div class="hscroll">${flash.map(p => productCard(p)).join('')}</div></section>` : ''}
     ${coupons.length ? `<section class="block" style="padding-top:0">${sectionHead('Shop coupons', 'Enter the code in your cart. Each code works with its own shop.')}<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${coupons.map(couponCard).join('')}</div></section>` : ''}
     <section class="block" style="padding-top:0">
-      <div class="result-bar"><div class="chips"><a class="chip ${!cat ? 'on' : ''}" href="${dl({ cat: '' })}">All</a>${CATEGORIES.filter(c => deals.some(p => p.category === c.id)).map(c => `<a class="chip ${cat === c.id ? 'on' : ''}" href="${dl({ cat: c.id })}">${esc(c.name)}</a>`).join('')}</div>
+      <div class="result-bar"><div class="chips"><a class="chip ${!cat ? 'on' : ''}" href="${dl({ cat: '' })}">All</a>${CATEGORIES.filter(c => deals.some(p => p.category === c.id)).map(c => `<a class="chip ${cat === c.id ? 'on' : ''}" href="${dl({ cat: c.id })}">${esc(L(c, 'name'))}</a>`).join('')}</div>
         <div class="sort"><label for="dsort">Sort:</label><select id="dsort" onchange="location.hash='${dl({ sort: '' })}&sort='+this.value"><option value="ending" ${sort === 'ending' ? 'selected' : ''}>Ending soonest</option><option value="biggest" ${sort === 'biggest' ? 'selected' : ''}>Biggest discount</option><option value="low" ${sort === 'low' ? 'selected' : ''}>Lowest price</option></select></div></div>
       <div class="grid">${other.map(p => productCard(p)).join('')}</div>
     </section>
     <section class="block" style="padding-top:0">${sectionHead('Deals by shop')}
-      ${byShop.map(({ s, items }) => `<div style="margin-bottom:24px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">${shopLogo(s)}<div style="flex:1"><b>${esc(s.name)}</b><br><small class="muted">${items.length} deal${items.length > 1 ? 's' : ''} · up to ${Math.max(...items.map(i => i.discount))}% off</small></div><a class="link-more" href="#/store/${s.id}?tab=deals">See the shop's deals</a></div>
+      ${byShop.map(({ s, items }) => `<div style="margin-bottom:24px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">${shopLogo(s)}<div style="flex:1"><b>${esc(L(s, 'name'))}</b><br><small class="muted">${items.length} deal${items.length > 1 ? 's' : ''} · up to ${Math.max(...items.map(i => i.discount))}% off</small></div><a class="link-more" href="#/store/${s.id}?tab=deals">See the shop's deals</a></div>
         <div class="hscroll">${items.map(p => productCard(p, { hideShop: true })).join('')}</div></div>`).join('')}
     </section>
   </div>`;
@@ -505,7 +543,7 @@ Pages.about = () => `<div class="wrap" style="max-width:960px;padding-bottom:20p
     <img src="${PW.gadaladeniya}" alt="Gadaladeniya temple near Pilimathalawa" style="border-radius:14px;width:100%;aspect-ratio:21/9;object-fit:cover;margin-bottom:24px">
     <div style="max-width:72ch;font-size:1.05rem">
       <p>Pilimathalawa is a town about 10 km from Kandy on the road to Kadugannawa. It sits close to the Gadaladeniya, Lankathilaka and Embekka temples, and it has long been known for traditional udarata brassware.</p>
-      <p>Two kinds of work are done here. <b>Cast work</b> — oil lamps, Buddha statues, karaduwa and kendiya — is made by pouring molten brass into sand moulds. <b>Sheet work</b> — caskets, trays and pettagama — is beaten and chased by hand into patterns such as the liyawela vine and the lotus.</p>
+      <p>Two kinds of work are done here. Cast work — oil lamps, Buddha statues, karaduwa and kendiya — is made by pouring molten brass into sand moulds. Sheet work — caskets, trays and pettagama — is beaten and chased by hand into patterns such as the liyawela vine and the lotus.</p>
       <p>Many workshops are small family businesses that have sold through middlemen for years. Pittala.lk lets them reach buyers directly: the shop sets its price, packs the order and collects cash on delivery.</p>
       <h2 style="margin:30px 0 10px">Caring for brass</h2>
       <p>Wipe brass with a dry cloth after use. To remove soot and tarnish from oil lamps, use a paste of tamarind or lime with a little salt, then rinse and dry well. Gold-plated and antique finishes should only be dusted.</p>
@@ -533,7 +571,7 @@ Pages.sell = () => {
     ['bolt', 'Home page spotlight', 'Ask for your best item to be featured on the home page.']
   ];
   return `<div class="wrap">
-    <div class="page-head"><div class="crumbs"><a href="#/">Home</a> › Sell on Pittala</div><h1>Sell your brassware to all of Sri Lanka</h1><p class="muted" style="margin:6px 0 0;max-width:64ch">Shops in the ${esc(r.name)} region are onboarded by our region agent, ${esc(Store.userById(r.agentUserId).name)}.</p></div>
+    <div class="page-head"><div class="crumbs"><a href="#/">Home</a> › Sell on Pittala</div><h1>Sell your brassware to all of Sri Lanka</h1><p class="muted" style="margin:6px 0 0;max-width:64ch">${esc(`Shops in the ${r.name} region are onboarded by our region agent, ${Store.userById(r.agentUserId).name}.`)}</p></div>
     <div class="dash-grid even">
       <div class="card"><h3>How to open your shop</h3>
         <div class="pipeline" style="grid-template-columns:1fr;row-gap:16px;margin:8px 0 18px">

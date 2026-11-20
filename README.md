@@ -38,6 +38,24 @@ While waiting, owners can already add products, design the shop and check contac
 
 "Reset demo data" is in the footer and in Super admin → Settings.
 
+## Sinhala / English
+
+- Switch language with **සිංහල | English** in the top bar (or the සිං/EN button on mobile). The choice is remembered.
+- All interface text (storefront, checkout, messages, pop-ups and every dashboard) is translated in
+  `assets/js/i18n-si.js`. To change a translation, edit the Sinhala text on the right-hand side.
+  `{0}`, `{1}` stand for numbers and prices.
+- Products and shops have their own Sinhala fields (`name_si`, `description_si`, `tagline_si`, `story_si`,
+  `announcement_si`). Shop owners fill these in from Dashboard → Products → Edit, and Dashboard → Shop design.
+  If a Sinhala field is empty, the English text is shown.
+- WhatsApp order messages are written in Sinhala when the shop owner uses the Sinhala dashboard; order emails
+  include a Sinhala section.
+
+## Videos
+
+Home page videos are Sri Lankan clips from Pixabay (free licence, no attribution required), set in
+`VIDEOS` at the top of `assets/js/data.js`. Replace any URL with your own `.mp4` (for example a video of the
+client's workshop) to change it.
+
 ## Roles and business rules
 
 - **Commission:** 12% on delivered orders = **10% region agent + 2% platform**.

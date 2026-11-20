@@ -36,11 +36,15 @@ const App = {
     document.getElementById('hdr').innerHTML = renderHeader('/' + (parts[0] || ''));
     document.getElementById('app').innerHTML = html;
     document.getElementById('ftr').innerHTML = isDash ? '' : renderFooter();
-    document.title = `${title} · Pittala.lk`;
+    document.getElementById('mnav').innerHTML = renderMobileNav('/' + (parts[0] || ''));
+    document.title = `${tr(title)} · Pittala.lk`;
+    translateNode(document.getElementById('hdr')); translateNode(document.getElementById('app')); translateNode(document.getElementById('ftr')); translateNode(document.getElementById('mnav'));
+    const appEl = document.getElementById('app'); appEl.style.animation = 'none'; void appEl.offsetWidth; appEl.style.animation = '';
     mountQueue.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
     mountQueue = [];
     tickTimers();
     bindSearch();
+    observeReveals();
     window.scrollTo(0, samePath ? y : 0);
     this.lastPath = path;
   },
@@ -48,12 +52,23 @@ const App = {
   refreshHeader() {
     const { parts } = this.parse();
     document.getElementById('hdr').innerHTML = renderHeader('/' + (parts[0] || ''));
+    document.getElementById('mnav').innerHTML = renderMobileNav('/' + (parts[0] || ''));
+    translateNode(document.getElementById('hdr')); translateNode(document.getElementById('mnav'));
     bindSearch();
     tickTimers();
   },
 
   currentShop() { const u = Store.user(); return u && u.shopId ? Store.shop(u.shopId) : null; }
 };
+
+let revealIO = null;
+function observeReveals() {
+  const els = document.querySelectorAll('.reveal:not(.in)');
+  if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return; }
+  if (revealIO) revealIO.disconnect();
+  revealIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealIO.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+  els.forEach(e => revealIO.observe(e));
+}
 
 function bindSearch() {
   const form = document.getElementById('searchForm');
@@ -74,8 +89,8 @@ function bindSearch() {
   input.addEventListener('input', () => {
     const t = input.value.trim().toLowerCase();
     if (t.length < 2) { box.classList.add('hide'); return; }
-    const prods = Store.liveProducts().filter(p => (p.name + ' ' + Store.cat(p.category).name).toLowerCase().includes(t)).slice(0, 6);
-    const shops = Store.publishedShops().filter(s => s.name.toLowerCase().includes(t)).slice(0, 2);
+    const prods = Store.liveProducts().filter(p => (p.name + ' ' + (p.name_si || '') + ' ' + Store.cat(p.category).name + ' ' + (Store.cat(p.category).name_si || '')).toLowerCase().includes(t)).slice(0, 6);
+    const shops = Store.publishedShops().filter(s => (s.name + ' ' + (s.name_si || '')).toLowerCase().includes(t)).slice(0, 2);
     const cats = CATEGORIES.filter(c => (c.name + ' ' + c.si).toLowerCase().includes(t)).slice(0, 2);
     box.innerHTML = cats.map(c => `<a href="#/shop?cat=${c.id}">${icon('grid')}<span>in <b>${esc(c.name)}</b></span></a>`).join('')
       + shops.map(s => `<a href="#/store/${s.id}">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">Shop</small></span></a>`).join('')
@@ -89,11 +104,12 @@ function bindSearch() {
 /* ---------- Click actions ---------- */
 function addedToCart(id, n) {
   const p = Store.product(id);
-  openModal({ title: 'Added to your cart', body: `<div style="display:flex;gap:14px;align-items:center"><img src="${esc(p.images[0])}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:10px"><div><b>${esc(p.name)}</b><br><span class="muted">Qty ${n} · ${money(Store.priceOf(p) * n)}</span><br><span class="muted">Sold by ${esc(Store.shop(p.shopId).name)}</span></div></div>`,
+  openModal({ title: 'Added to your cart', body: `<div style="display:flex;gap:14px;align-items:center"><img src="${esc(p.images[0])}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:10px"><div><b>${esc(L(p, 'name'))}</b><br><span class="muted">Qty ${n} · ${money(Store.priceOf(p) * n)}</span><br><span class="muted">Sold by ${esc(L(Store.shop(p.shopId), 'name'))}</span></div></div>`,
     foot: `<button class="btn btn-ghost" data-action="close-modal">Continue shopping</button><a class="btn btn-brass" href="#/cart" onclick="closeModal()">Go to cart (${Store.cartCount()})</a>` });
 }
 
 const Actions = {
+  lang: el => { I18N.set(el.dataset.l); App.render(); toast(el.dataset.l === 'si' ? 'සිංහල භාෂාව තෝරා ඇත' : 'Language set to English'); },
   'close-modal': () => closeModal(),
   menu: () => document.getElementById('mega').classList.toggle('hide'),
   mega: el => { const m = document.getElementById('mega'); m.classList.toggle('hide'); el.setAttribute('aria-expanded', !m.classList.contains('hide')); },
@@ -111,7 +127,7 @@ const Actions = {
   },
   notify: el => {
     const p = Store.product(el.dataset.id);
-    openModal({ title: 'Tell me when it is back', body: `<p>We will message you on WhatsApp when <b>${esc(p.name)}</b> is back in stock.</p><div class="field"><label for="nPhone">WhatsApp number</label><input class="input" id="nPhone" placeholder="07X XXX XXXX"></div>`,
+    openModal({ title: 'Tell me when it is back', body: `<p>${esc(`We will message you on WhatsApp when ${L(p, 'name')} is back in stock.`)}</p><div class="field"><label for="nPhone">WhatsApp number</label><input class="input" id="nPhone" placeholder="07X XXX XXXX"></div>`,
       foot: `<button class="btn btn-ghost" data-action="close-modal">Cancel</button><button class="btn btn-dark" data-action="notify-save" data-id="${p.id}">Notify me</button>` });
   },
   'notify-save': el => {
@@ -138,7 +154,7 @@ const Actions = {
       const body = `Hello ${u.name},\n\nYou asked for your Pittala.lk login details.\n\nEmail: ${u.email}\nPassword: ${u.password}\n\nSign in: ${location.origin + location.pathname}#/login\n\nIf you did not ask for this, you can ignore this email.\n\nPittala.lk`;
       Store.s.outbox.unshift({ at: Date.now(), kind: 'reset', to: u.email, subject: 'Your Pittala.lk login details', body });
       Store.save();
-      openModal({ title: 'Check your email', body: `<p>We sent your login details to <b>${esc(u.email)}</b>.</p><div class="email-preview"><div class="eh"><b>Subject:</b> Your Pittala.lk login details</div><pre>${esc(body)}</pre></div>`, foot: `<a class="btn btn-ghost" href="${mailLink(u.email, 'Your Pittala.lk login details', body)}">Open in my email app</a><button class="btn btn-dark" data-action="close-modal">Done</button>` });
+      openModal({ title: 'Check your email', body: `<p>${esc(`We sent your login details to ${u.email}.`)}</p><div class="email-preview"><div class="eh"><b>Subject:</b> Your Pittala.lk login details</div><pre>${esc(body)}</pre></div>`, foot: `<a class="btn btn-ghost" href="${mailLink(u.email, 'Your Pittala.lk login details', body)}">Open in my email app</a><button class="btn btn-dark" data-action="close-modal">Done</button>` });
     } else toast('If that email has an account, the login details are on their way.');
   },
   'reg-back': () => { reg.step = Math.max(1, reg.step - 1); App.render(); },
@@ -222,6 +238,8 @@ document.addEventListener('change', e => {
 
 /* ---------- Boot ---------- */
 Store.load();
+I18N.set(I18N.lang);
+document.addEventListener('DOMContentLoaded', () => translateNode(document.body));
 window.addEventListener('hashchange', () => App.render());
 document.addEventListener('click', e => { const m = document.getElementById('mega'); if (m && !m.classList.contains('hide') && !e.target.closest('#mega, [data-action="mega"]')) m.classList.add('hide'); });
 App.render();

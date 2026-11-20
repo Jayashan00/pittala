@@ -2,7 +2,7 @@
    Frontend-only demo: data lives in the browser (localStorage) so the client
    can click through every role. Swap these functions for API calls later. */
 
-const KEY = 'pittala-state-v4';
+const KEY = 'pittala-state-v5';
 let memoryFallback = null;
 
 const Store = {
@@ -12,7 +12,7 @@ const Store = {
     let raw = null;
     try { raw = localStorage.getItem(KEY); } catch (e) { raw = memoryFallback; }
     if (raw) { try { this.s = JSON.parse(raw); } catch (e) { this.s = null; } }
-    if (!this.s || this.s.version !== 4) this.s = buildSeed();
+    if (!this.s || this.s.version !== 5) this.s = buildSeed();
     this.refreshDemoDeals();
     this.save();
   },
@@ -190,12 +190,19 @@ const ORDER_FLOW = ['pending', 'confirmed', 'packed', 'shipped', 'delivered'];
 /* ----- formatting ----- */
 const money = n => 'Rs. ' + Math.round(n || 0).toLocaleString('en-LK');
 const moneyShort = n => n >= 1e6 ? 'Rs. ' + (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? 'Rs. ' + (n / 1e3).toFixed(1) + 'k' : money(n);
-const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-const fmtDateTime = ts => new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const ago = ts => { const m = Math.round((Date.now() - ts) / 6e4); if (m < 60) return `${m} min ago`; const h = Math.round(m / 60); if (h < 24) return `${h} h ago`; return `${Math.round(h / 24)} d ago`; };
+const LOC = () => (typeof isSi === 'function' && isSi()) ? 'si-LK' : 'en-GB';
+const SI_MONTHS = ['ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්'];
+const SI_DAYS = ['ඉරිදා', 'සඳුදා', 'අඟහරුවාදා', 'බදාදා', 'බ්‍රහස්පතින්දා', 'සිකුරාදා', 'සෙනසුරාදා'];
+const siOn = () => typeof isSi === 'function' && isSi();
+const pad2 = n => String(n).padStart(2, '0');
+const fmtDate = ts => { const d = new Date(ts); return siOn() ? `${d.getFullYear()} ${SI_MONTHS[d.getMonth()]} ${d.getDate()}` : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const fmtDateTime = ts => { const d = new Date(ts); return siOn() ? `${SI_MONTHS[d.getMonth()]} ${d.getDate()}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}` : d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+const fmtDay = ts => { const d = new Date(ts); return siOn() ? `${SI_DAYS[d.getDay()]}, ${SI_MONTHS[d.getMonth()]} ${d.getDate()}` : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const fmtShort = ts => { const d = new Date(ts); return siOn() ? `${SI_MONTHS[d.getMonth()]} ${d.getDate()}` : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+const monthName = key => { const [y, m] = key.split('-'); return siOn() ? `${y} ${SI_MONTHS[+m - 1]}` : new Date(+y, +m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }); };
+const ago = ts => { const m = Math.round((Date.now() - ts) / 6e4); const si = typeof isSi === 'function' && isSi(); if (m < 60) return si ? `මිනිත්තු ${m}කට පෙර` : `${m} min ago`; const h = Math.round(m / 60); if (h < 24) return si ? `පැය ${h}කට පෙර` : `${h} h ago`; return si ? `දින ${Math.round(h / 24)}කට පෙර` : `${Math.round(h / 24)} d ago`; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const initials = name => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-const monthName = key => { const [y, m] = key.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }); };
 
 /* Sri Lankan phone helpers */
 const normPhone = v => (v || '').replace(/[^\d+]/g, '');
@@ -206,24 +213,27 @@ const mailLink = (to, subject, body) => `mailto:${encodeURIComponent(to)}?subjec
 
 /* ----- message templates ----- */
 const Msg = {
-  itemsText(o) { return o.items.map(i => `• ${i.qty} × ${i.name} — ${money(i.price * i.qty)}`).join('\n'); },
+  itemsText(o) { return o.items.map(i => `• ${i.qty} × ${typeof itemName === 'function' ? itemName(i) : i.name} — ${money(i.price * i.qty)}`).join('\n'); },
   addr(c) { return [c.address, c.line2, c.city, c.district + ' District', c.postal].filter(Boolean).join(', '); },
   // Shop → buyer: sent by the shop owner with one click after the order arrives
   waToBuyer(o) {
     const shop = Store.shop(o.shopId);
+    if (isSi()) return `ආයුබෝවන් ${o.customer.name} 🙏\n\nමෙය Pittala.lk හරහා *${L(shop, 'name')}* (පිළිමතලාව) වෙතින්.\nඔබගේ ඇණවුම *${o.id}* අපට ලැබුණා:\n\n${this.itemsText(o)}\n${o.discount ? `වට්ටම: -${money(o.discount)}\n` : ''}බෙදාහැරීම: ${o.delivery ? money(o.delivery) : 'නොමිලේ'}\n*භාණ්ඩ ලැබෙන විට ගෙවිය යුතු මුළු මුදල: ${money(o.total)}*\n\nබෙදාහරින ලිපිනය:\n${this.addr(o.customer)}${o.customer.landmark ? `\nආසන්න ස්ථානය: ${o.customer.landmark}` : ''}\nදුරකථන: ${o.customer.phone}\n\nඇණවුම තහවුරු කිරීමට කරුණාකර *ඔව්* ලෙස පිළිතුරු දෙන්න. වැඩ කරන දින 2ක් ඇතුළත යවනු ලැබේ. ස්තූතියි!`.replace(/Rs\./g, 'රු.');
     return `Ayubowan ${o.customer.name} 🙏\n\nThis is *${shop.name}* (Pilimathalawa) via Pittala.lk.\nWe received your order *${o.id}*:\n\n${this.itemsText(o)}\n${o.discount ? `Discount: -${money(o.discount)}\n` : ''}Delivery: ${o.delivery ? money(o.delivery) : 'Free'}\n*Total to pay on delivery: ${money(o.total)}*\n\nDeliver to:\n${this.addr(o.customer)}${o.customer.landmark ? `\nLandmark: ${o.customer.landmark}` : ''}\nPhone: ${o.customer.phone}\n\nPlease reply *YES* to confirm and we will dispatch within 2 working days. Thank you!`;
   },
   waStatus(o) {
     const shop = Store.shop(o.shopId);
+    if (isSi()) return `ආයුබෝවන් ${o.customer.name}, *${L(shop, 'name')}* වෙතින් යාවත්කාලීන කිරීමක්:\nඔබගේ ඇණවුම *${o.id}* දැන් *${tr(STATUS_LABEL[o.status])}*.\nභාණ්ඩ ලැබෙන විට ගෙවිය යුතු මුදල: ${money(o.total)}.\nලුහුබඳින්න: ${location.origin}${location.pathname}#/track?id=${o.id}`.replace(/Rs\./g, 'රු.');
     return `Hello ${o.customer.name}, update from *${shop.name}*:\nYour order *${o.id}* is now *${STATUS_LABEL[o.status]}*.\nAmount to pay on delivery: ${money(o.total)}.\nTrack: ${location.origin}${location.pathname}#/track?id=${o.id}`;
   },
-  // Buyer → shop: optional, from the order success page
   waToShop(o) {
+    if (isSi()) return `ආයුබෝවන් ${L(Store.shop(o.shopId), 'name')}, මම Pittala.lk හි *${o.id}* ඇණවුම කළා.\n\n${this.itemsText(o)}\nමුළු මුදල (භාණ්ඩ ලැබුණු විට): ${money(o.total)}\n\nනම: ${o.customer.name}\nදුරකථන: ${o.customer.phone}\nලිපිනය: ${this.addr(o.customer)}`.replace(/Rs\./g, 'රු.');
     return `Hello ${Store.shop(o.shopId).name}, I placed order *${o.id}* on Pittala.lk.\n\n${this.itemsText(o)}\nTotal (COD): ${money(o.total)}\n\nName: ${o.customer.name}\nPhone: ${o.customer.phone}\nAddress: ${this.addr(o.customer)}`;
   },
   email(o) {
     const shop = Store.shop(o.shopId);
-    return `Hello ${o.customer.name},\n\nThank you for your order with ${shop.name} on Pittala.lk.\n\nOrder number: ${o.id}\nPayment: Cash on delivery\n\n${this.itemsText(o)}\n${o.discount ? `Discount (${o.coupon}): -${money(o.discount)}\n` : ''}Delivery: ${o.delivery ? money(o.delivery) : 'Free'}\nTotal to pay on delivery: ${money(o.total)}\n\nDelivery address:\n${this.addr(o.customer)}\n\nThe shop will contact you on WhatsApp (${o.customer.whatsapp || o.customer.phone}) to confirm before dispatch.\n\nShop contact: ${shop.phone}\n\nPittala.lk — Pilimathalawa brass, direct from the makers.`;
+    const siPart = `\n\n— සිංහලෙන් —\nඔබගේ ${o.id} ඇණවුමට ස්තූතියි. භාණ්ඩ ලැබෙන විට ${money(o.total).replace('Rs.', 'රු.')} ක් ගෙවන්න. යැවීමට පෙර වෙළෙන්දා WhatsApp මගින් ඔබව සම්බන්ධ කර ගනු ඇත.`;
+    return `Hello ${o.customer.name},\n\nThank you for your order with ${shop.name} on Pittala.lk.\n\nOrder number: ${o.id}\nPayment: Cash on delivery\n\n${this.itemsText(o)}\n${o.discount ? `Discount (${o.coupon}): -${money(o.discount)}\n` : ''}Delivery: ${o.delivery ? money(o.delivery) : 'Free'}\nTotal to pay on delivery: ${money(o.total)}\n\nDelivery address:\n${this.addr(o.customer)}\n\nThe shop will contact you on WhatsApp (${o.customer.whatsapp || o.customer.phone}) to confirm before dispatch.\n\nShop contact: ${shop.phone}\n\nPittala.lk — Pilimathalawa brass, direct from the makers.${siPart}`;
   },
   shopEmail(o) {
     return `New cash-on-delivery order ${o.id}\n\n${this.itemsText(o)}\nTotal to collect: ${money(o.total)}\n\nBuyer: ${o.customer.name}\nPhone: ${o.customer.phone}\nWhatsApp: ${o.customer.whatsapp}\nEmail: ${o.customer.email}\nAddress: ${this.addr(o.customer)}\nLandmark: ${o.customer.landmark || '-'}\nNotes: ${o.customer.notes || '-'}\n\nOpen your dashboard and press "Send WhatsApp confirmation" to confirm with the buyer.`;

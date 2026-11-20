@@ -24,6 +24,15 @@ const SL_PHOTOS = {
 const P = Object.fromEntries(Object.entries(SL_PHOTOS).map(([k, v]) => [k, PX(v)]));
 const PW = Object.fromEntries(Object.entries(SL_PHOTOS).map(([k, v]) => [k, PX(v, 1600)]));
 
+
+/* Sri Lankan videos (Pixabay, free licence, no attribution required) */
+const VIDEOS = {
+  templeLamp: 'https://cdn.pixabay.com/video/2023/05/18/163544-828200779_large.mp4',   // oil lamp in a Sri Lankan temple
+  buddhistTemple: 'https://cdn.pixabay.com/video/2022/01/22/105333-670062565_large.mp4', // Buddhist temple, Sri Lanka
+  rockTemple: 'https://cdn.pixabay.com/video/2024/10/17/236710_large.mp4',            // temple on a rock, Matale
+  lakeTemple: 'https://cdn.pixabay.com/video/2025/04/16/272321_large.mp4'             // temple in a lake, Welioya
+};
+
 /* ---------- Product renders (studio-style) for items without a free photo ---------- */
 function productArt(type, tone = 'brass') {
   const tones = {
@@ -80,13 +89,13 @@ const HERO_SLIDES = [
 ];
 
 const CATEGORIES = [
-  { id: 'oil-lamps', name: 'Oil lamps', si: 'පහන්', img: P.lampKandy },
-  { id: 'buddha', name: 'Buddha statues', si: 'බුද්ධ ප්‍රතිමා', img: P.buddhaBrass },
-  { id: 'karaduwa', name: 'Karaduwa & caskets', si: 'කරඬු', img: ART.karaduwaGold },
-  { id: 'pooja', name: 'Pooja & temple items', si: 'පූජා භාණ්ඩ', img: P.lampsBuddhist },
-  { id: 'kendiya', name: 'Kendiya & tableware', si: 'කෙණ්ඩිය', img: ART.kendiya },
-  { id: 'pettagama', name: 'Pettagama & boxes', si: 'පෙට්ටගම', img: ART.pettagama },
-  { id: 'gifts', name: 'Gifts & souvenirs', si: 'තෑගි', img: P.lampDecor }
+  { id: 'oil-lamps', name: 'Oil lamps', name_si: 'පහන්', si: 'පහන්', img: P.lampKandy },
+  { id: 'buddha', name: 'Buddha statues', name_si: 'බුද්ධ ප්‍රතිමා', si: 'බුද්ධ ප්‍රතිමා', img: P.buddhaBrass },
+  { id: 'karaduwa', name: 'Karaduwa & caskets', name_si: 'කරඬු සහ මංජුසා', si: 'කරඬු', img: ART.karaduwaGold },
+  { id: 'pooja', name: 'Pooja & temple items', name_si: 'පූජා භාණ්ඩ', si: 'පූජා භාණ්ඩ', img: P.lampsBuddhist },
+  { id: 'kendiya', name: 'Kendiya & tableware', name_si: 'කෙණ්ඩි සහ මේස භාණ්ඩ', si: 'කෙණ්ඩිය', img: ART.kendiya },
+  { id: 'pettagama', name: 'Pettagama & boxes', name_si: 'පෙට්ටගම් සහ පෙට්ටි', si: 'පෙට්ටගම', img: ART.pettagama },
+  { id: 'gifts', name: 'Gifts & souvenirs', name_si: 'තෑගි සහ සිහිවටන', si: 'තෑගි', img: P.lampDecor }
 ];
 
 const DISTRICTS = ['Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'];
@@ -203,6 +212,44 @@ function buildSeed() {
     mk('p22', 's5', 'Kendiya miniature souvenir', 'gifts', 3500, { discount: 15, stock: 20, images: [ART.kendiya], sold: 31, rating: 4.3, reviews: 6, dim: 'H 10 cm', desc: 'A small kendiya — a light, easy-to-pack souvenir of Sri Lanka.' })
   ];
 
+
+  // ---- Sinhala content (shops can edit these in their dashboard) ----
+  const SI_P = {
+    p1: ['සාම්ප්‍රදායික පහන — වැටි 5 සිටුවන පොල්තෙල් පහන, අඟල් 18', 'ශ්‍රී ලාංකික නිවසක සෑම සුබ මොහොතකම දල්වන පහන. පඩි සහිත කඳක් මත වැටි පහක්, එක් කොටසක් ලෙස වැලි අච්චුවේ වාත්තු කර අතින් නිම කර ඇත. අවුරුද්ද, මංගල උත්සව, ආයතන විවෘත කිරීම් සහ පූජා කාමරයට ඉතා සුදුසුයි.'],
+    p2: ['කුකුළු පහන — උත්සව පහන, අඩි 5', 'සමාරම්භක උත්සව, මංගල උත්සව සහ ජාතික උත්සවවලදී භාවිත වන කුකුළු රූපය සහිත උස උත්සව පහන. සෑදීමට වැඩ කරන දින හතක් ගත වේ.'],
+    p3: ['මේස පහන — කුඩා, අඟල් 9', 'මහල් නිවාසවල පූජා කාමර සහ කාර්යාල මේස සඳහා සුදුසු අපගේ කුඩාම සිටුවන පහන.'],
+    p4: ['පොල්තෙල් එල්ලෙන පහන — දම්වැල සහිතව', 'විහාර සහ වළව්වල දක්නට ලැබෙන ආකාරයේ වැටි හතක එල්ලෙන පහනක්, අතින් තැනූ දම්වැලක් සමඟ.'],
+    p5: ['සමාධි බුද්ධ ප්‍රතිමාව — පැරණි නිමාව, අඟල් 12', 'සමාධි ඉරියව්වෙන් වැඩ සිටින බුද්ධ ප්‍රතිමාව, පිත්තලෙන් වාත්තු කර කාලයත් සමඟ තවත් ගැඹුරු වන තද පැරණි නිමාවකින් යුතුයි.'],
+    p6: ['සමාධි බුද්ධ ප්‍රතිමාව — රන් ආලේපිත, අඟල් 8', 'නිවසේ පූජාසනය සඳහා දීප්තිමත් රන් ආලේපිත නිමාවක් සහිත කුඩා බුද්ධ ප්‍රතිමාවකි.'],
+    p7: ['දම්වැල් සහිත රන් ආලේපිත කරඬුව — අඩි 3', 'චූඩාමාණික්‍යය, අලංකාර දම්වැල් සහ කාච අලංකරණ සහිත දාගැබ් හැඩැති ධාතු කරඬුවකි. විහාරස්ථාන සහ නිවෙස් පූජාසන සඳහා ඇණවුම් මත සාදනු ලැබේ.'],
+    p8: ['පිත්තල කරඬුව — අඟල් 12', 'නිවසේ පූජා කාමරය සඳහා ස්වභාවික පිත්තල නිමාවෙන් යුත් මේස ප්‍රමාණයේ කරඬුවකි.'],
+    p9: ['මංජුසාව (ධාතු පෙට්ටිය) — පැරණි නිමාව', 'සරනේරු සහිත පියනක් සහ අගුලු තහඩුවක් ඇති කුඩා ධාතු පෙට්ටියකි.'],
+    p10: ['පිත්තල පෙට්ටගම — ආභරණ පෙට්ටිය', 'පිත්තල පටි සහ ක්‍රියාකාරී අගුලක් සහිත සාම්ප්‍රදායික පෙට්ටගමේ කුඩා අනුරුවකි. මනරම් මංගල තෑග්ගකි.'],
+    p11: ['කුඩා කරඬු සිහිවටනය — අඟල් 6', 'වෙසක් හෝ පොසොන් තෑග්ගක් ලෙස ජනප්‍රිය කුඩා රන් ආලේපිත කරඬුවකි.'],
+    p12: ['වැටි සහිත කුඩා පහන් තෑගි කට්ටලය', 'කපු වැටි සමඟ තෑගි පෙට්ටියක ඇති කුඩා පහනක් — අවුරුදු සහ ගෘහප්‍රවේශ තෑගි සඳහා ඉතා සුදුසුයි.'],
+    p13: ['පුන්කලස් යුගලය — රන් ආලේපිත', 'මංගල උත්සව සහ විවෘත කිරීම් සඳහා භාවිත කරන පොල් මල් සහිත පුන්කලස් යුගලයකි.'],
+    p14: ['වැටි 5 පහන — විහාර රටාව', 'විහාර රටාවේ කඳක් සහිත වැටි පහක සිටුවන පහනකි.'],
+    p15: ['පූජා පහන් කට්ටලය (4)', 'පූජා කාමරයට හෝ විහාරස්ථානයට ගැළපෙන පූජා පහන් හතරක කට්ටලයකි.'],
+    p16: ['පිත්තල හෙප්පුව — අඟල් 10', 'පූජාසනයේ මල් සහ ආහාර පූජා සඳහා භාවිත කරන පාදය සහිත පූජා තැටිය.'],
+    p17: ['පියන සහ පාදය සහිත පාත්තරය', 'දානය සහ විහාරස්ථාන පූජා සඳහා භාවිත කරන පියන සහ පාදය සහිත පිත්තල පාත්තර කට්ටලයකි.'],
+    p18: ['නෙළුම් කැකුළු මිට සහිත ඝණ්ටාරය', 'නෙළුම් කැකුළු හැඩැති මිටක් සහිත, පැහැදිලිව දිගු වේලාවක් නාද වන ඝණ්ටාරයකි.'],
+    p19: ['සාම්ප්‍රදායික කෙණ්ඩිය', 'ලියවැල් පටි කැටයම් කළ, පැරණි උඩරට නිවෙස්වල භාවිත වූ හොට සහිත ජල භාජනය.'],
+    p20: ['පැරණි නිමාවේ කෙණ්ඩිය — විශාල', 'ප්‍රදර්ශනය සඳහා සාදන ලද, පැරණි පෙනුමක් ඇති විශාල කෙණ්ඩියකි.'],
+    p21: ['රන් ආලේපිත හෙප්පුව — මංගල මේසය', 'පෝරුව චාරිත්‍රය සහ මංගල මේසය සඳහා පාදය සහිත තැටියකි.'],
+    p22: ['කුඩා කෙණ්ඩි සිහිවටනය', 'ශ්‍රී ලංකාවේ සැහැල්ලු, ඇසුරුම් කිරීමට පහසු කුඩා කෙණ්ඩි සිහිවටනයකි.']
+  };
+  products.forEach(p => { if (SI_P[p.id]) { p.name_si = SI_P[p.id][0]; p.description_si = SI_P[p.id][1]; } });
+  const SI_S = {
+    s1: ['උඩරට පිත්තල නිවස', '1962 සිට විහාර ප්‍රමිතියේ පහන්', 'හේරත් පවුලේ පරම්පරා තුනක් කඳුරට පුරා විහාර හා දේවාල සඳහා පහන් සහ එල්ලෙන පහන් වාත්තු කර ඇත. සෑම පහනක්ම වැලි අච්චුවේ වාත්තු කර, අතින් කැටයම් කර, මහනුවර පාරේ පිහිටි අපගේ වැඩපොළේ ඔප දමනු ලැබේ.', 'මෙම සතියේ මහනුවර දිස්ත්‍රික්කයට නොමිලේ බෙදාහැරීම'],
+    s2: ['සිරි පිත්තල වැඩපොළ', 'බුද්ධ ප්‍රතිමා සහ කරඬු', 'සිරිසේන වයස අවුරුදු දොළහේදී සිය මාමාගෙන් වාත්තු කිරීම ඉගෙන ගත්තේය. මෙම වැඩපොළ විහාරස්ථාන සහ නිවෙස් සඳහා බුද්ධ ප්‍රතිමා, කරඬු සහ මංජුසා නිපදවයි.', 'වෙසක් ඇණවුම් දැන් භාරගනී — අප්‍රේල් 30 ට පෙර ඇණවුම් කරන්න'],
+    s3: ['ලක්මිණි පිත්තල කලා', 'පෙට්ටගම්, තෑගි සහ සිහිවටන', 'ගම්මානයේ නිවෙස්වල සිට වැඩ කරන කාන්තා ශිල්පීන් හය දෙනෙකු සමඟ පෙට්ටගම්, කුඩා කරඬු සහ තෑගි භාණ්ඩ සාදන කාන්තාවන් මෙහෙයවන වැඩපොළකි.', ''],
+    s4: ['දළදා පූජා භාණ්ඩ', 'විහාර සහ නිවෙස් සඳහා පූජා භාණ්ඩ', 'දිවයින පුරා විහාරස්ථානවලට හෙප්පු, පාත්තර, ඝණ්ටාර සහ පූජා පහන් සපයන අපි දැන් Pittala.lk හරහා නිවෙස්වලටද සපයමු.', ''],
+    s5: ['උඩරට කෙණ්ඩි වැඩපොළ', 'කෙණ්ඩි සහ සාම්ප්‍රදායික මේස භාණ්ඩ', 'පැරණි උඩරට ශෛලියෙන්, දිනපතා භාවිතයට සුදුසු කෙණ්ඩි, ජල භාජන සහ පිළිගැන්වීමේ භාණ්ඩ.', 'රු. 10,000 ට වැඩි ඇණවුම් සඳහා UDA5 කේතයෙන් 5% වට්ටමක්'],
+    s6: ['සේනානායක පිත්තල වාත්තු පොළ', 'ඇණවුම් මත විශාල වාත්තු', 'විහාරස්ථාන සවිකිරීම් සහ විශාල ප්‍රතිමා සඳහා වාත්තු කටයුතු.', ''],
+    s7: ['දිලානි තෑගි ස්ටූඩියෝ', 'මංගල සහ ආයතනික පිත්තල තෑගි', 'මංගල උත්සව සහ ආයතනික උත්සව සඳහා කැටයම් කළ පිත්තල සිහිවටන.', '']
+  };
+  shops.forEach(x => { const v = SI_S[x.id]; if (v) { x.name_si = v[0]; x.tagline_si = v[1]; x.story_si = v[2]; x.announcement_si = v[3]; } });
+
   const names = ['Ishara F.', 'Tharindu P.', 'Malsha K.', 'Dinesh R.', 'Sachini W.', 'Pradeep J.', 'Nethmi S.', 'Ashan M.', 'Kavindi L.', 'Ruwini D.', 'Amila G.', 'Hasini B.'];
   const lines = [
     'Heavier and better finished than the ones I saw in Colombo shops.',
@@ -267,7 +314,7 @@ function buildSeed() {
   ];
 
   return {
-    version: 4, seededAt: now, settings, regions, users, shops, products, reviews, orders, coupons, spotlights,
+    version: 5, seededAt: now, settings, regions, users, shops, products, reviews, orders, coupons, spotlights,
     settlements: {}, outbox: [], activity: [
       { at: now - 3 * D, who: 'Kumara Bandara Herath', what: 'confirmed registration payment for Dilani Gift Studio' },
       { at: now - 2 * D, who: 'Ruwan Senanayake', what: 'submitted a shop application (Senanayake Brass Foundry)' }

@@ -10,6 +10,10 @@ function chart(id, cfg) {
     Chart.defaults.color = css.getPropertyValue('--ink-3').trim() || '#7B8783';
     Chart.defaults.borderColor = css.getPropertyValue('--line').trim() || '#D9E0DA';
     Chart.defaults.font.family = 'Manrope, system-ui, sans-serif';
+    if (cfg.data) {
+      if (cfg.data.labels) cfg.data.labels = cfg.data.labels.map(l => tr(String(l)));
+      (cfg.data.datasets || []).forEach(d => { if (d.label) d.label = tr(d.label); });
+    }
     charts.push(new Chart(el, cfg));
   });
 }
@@ -23,7 +27,7 @@ function dailySeries(orders, days = 30, valueFn = o => o.subtotal) {
   const start = new Date(); start.setHours(0, 0, 0, 0);
   for (let d = days - 1; d >= 0; d--) {
     const from = start.getTime() - d * 864e5, to = from + 864e5;
-    labels.push(new Date(from).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+    labels.push(fmtShort(from));
     data.push(orders.filter(o => o.status !== 'cancelled' && o.createdAt >= from && o.createdAt < to).reduce((a, o) => a + valueFn(o), 0));
   }
   return { labels, data };
@@ -71,7 +75,7 @@ Pages.dashboard = (q, section) => {
   const shop = u.shopId ? Store.shop(u.shopId) : null;
   return `<div class="dash">
     <aside class="dash-side">
-      <div class="dash-user"><span class="avatar">${esc(initials(u.name))}</span><div><b>${esc(u.name)}</b><span>${ROLE_LABEL[u.role]}${shop ? ` · ${esc(shop.name)}` : ''}</span></div></div>
+      <div class="dash-user"><span class="avatar">${esc(initials(u.name))}</span><div><b>${esc(L(u, 'name'))}</b><span>${ROLE_LABEL[u.role]}${shop ? ` · ${esc(L(shop, 'name'))}` : ''}</span></div></div>
       <nav class="dash-nav">
         ${nav.map(n => n[0] === 'grp' ? `<div class="grp">${esc(n[1])}</div>` : `<a href="#/dashboard/${n[0]}" class="${section === n[0] ? 'on' : ''}">${icon(n[2])} ${n[1]}${n[3] ? `<span class="pill">${n[3]}</span>` : ''}</a>`).join('')}
         <div class="grp">Account</div>
@@ -100,9 +104,9 @@ function ordersTable(orders, q, opts = {}) {
     ${list.length ? `<div class="table-wrap"><table class="t"><thead><tr><th>Order</th>${opts.showShop ? '<th>Shop</th>' : ''}<th>Buyer</th><th>Items</th><th>Total (COD)</th><th>Status</th><th>WhatsApp</th><th></th></tr></thead><tbody>
       ${list.map(o => `<tr>
         <td><b>${esc(o.id)}</b><br><small class="muted">${fmtDateTime(o.createdAt)}</small></td>
-        ${opts.showShop ? `<td>${esc(Store.shop(o.shopId).name)}</td>` : ''}
-        <td>${esc(o.customer.name)}<br><small class="muted">${esc(o.customer.city)}, ${esc(o.customer.district)}</small></td>
-        <td>${o.items.map(i => `${i.qty} × ${esc(i.name)}`).join('<br>')}</td>
+        ${opts.showShop ? `<td>${esc(L(Store.shop(o.shopId), 'name'))}</td>` : ''}
+        <td>${esc(L(o.customer, 'name'))}<br><small class="muted">${esc(o.customer.city)}, ${esc(o.customer.district)}</small></td>
+        <td>${o.items.map(i => `${i.qty} × ${esc(itemName(i))}`).join('<br>')}</td>
         <td><b>${money(o.total)}</b></td>
         <td>${statusPill(o.status)}</td>
         <td>${o.waSent ? `<span class="badge green">Sent ${ago(o.waSent)}</span>` : o.status === 'pending' ? '<span class="badge amber">Not sent</span>' : '<span class="muted">—</span>'}</td>
@@ -124,7 +128,7 @@ function openOrder(id, canEdit) {
     body: `<div class="dash-grid" style="grid-template-columns:1.2fr 1fr;margin:0">
       <div>
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">${statusPill(o.status)}<small class="muted">Placed ${fmtDateTime(o.createdAt)} · Cash on delivery</small></div>
-        ${o.items.map(i => `<div class="line-item" style="grid-template-columns:56px 1fr auto"><img src="${esc(i.img)}" alt="" style="width:56px;height:56px"><span>${i.qty} × ${esc(i.name)}<br><small class="muted">${money(i.price)} each</small></span><b>${money(i.price * i.qty)}</b></div>`).join('')}
+        ${o.items.map(i => `<div class="line-item" style="grid-template-columns:56px 1fr auto"><img src="${esc(i.img)}" alt="" style="width:56px;height:56px"><span>${i.qty} × ${esc(itemName(i))}<br><small class="muted">${money(i.price)} each</small></span><b>${money(i.price * i.qty)}</b></div>`).join('')}
         ${o.discount ? `<div class="sum-row"><span>Coupon ${esc(o.coupon)}</span><span>−${money(o.discount)}</span></div>` : ''}
         <div class="sum-row"><span>Delivery fee</span><span>${o.delivery ? money(o.delivery) : 'Free'}</span></div>
         <div class="sum-row total"><span>Collect on delivery</span><span>${money(o.total)}</span></div>
@@ -139,7 +143,7 @@ function openOrder(id, canEdit) {
       <div>
         <div class="card" style="margin-bottom:14px"><b>Buyer</b>
           <dl class="specs" style="grid-template-columns:96px 1fr;margin:10px 0 0;font-size:.88rem">
-            <dt>Name</dt><dd>${esc(c.name)}</dd><dt>Mobile</dt><dd><a href="tel:${esc(c.phone)}">${esc(c.phone)}</a></dd><dt>WhatsApp</dt><dd>${esc(c.whatsapp || c.phone)}</dd><dt>Email</dt><dd>${esc(c.email)}</dd>
+            <dt>Name</dt><dd>${esc(L(c, 'name'))}</dd><dt>Mobile</dt><dd><a href="tel:${esc(c.phone)}">${esc(c.phone)}</a></dd><dt>WhatsApp</dt><dd>${esc(c.whatsapp || c.phone)}</dd><dt>Email</dt><dd>${esc(c.email)}</dd>
             <dt>Address</dt><dd>${esc(Msg.addr(c))}</dd>${c.landmark ? `<dt>Landmark</dt><dd>${esc(c.landmark)}</dd>` : ''}${c.time ? `<dt>Deliver</dt><dd>${esc(c.time)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}
           </dl></div>
         <b>WhatsApp message (ready to send)</b>
@@ -163,7 +167,7 @@ function productsView(shop, q) {
     ${list.length ? `<div class="table-wrap"><table class="t"><thead><tr><th></th><th>Product</th><th>Price</th><th>Deal</th><th>Stock</th><th>Sold</th><th>Views</th><th>Sold-out seal</th><th>Visible</th><th></th></tr></thead><tbody>
     ${list.map(p => `<tr>
       <td><img class="t-img" src="${esc(p.images[0] || FALLBACK_IMG)}" alt=""></td>
-      <td><b>${esc(p.name)}</b><br><small class="muted">${esc(Store.cat(p.category).name)}</small></td>
+      <td><b>${esc(L(p, 'name'))}</b><br><small class="muted">${esc(L(Store.cat(p.category), 'name'))}</small></td>
       <td>${money(Store.priceOf(p))}${Store.dealActive(p) ? `<br><s class="muted">${money(p.price)}</s>` : ''}</td>
       <td>${Store.dealActive(p) ? `<span class="badge red">−${p.discount}%</span>${p.dealEnds ? `<br><small data-countdown="${p.dealEnds}">${countdownText(p.dealEnds)}</small>` : ''}` : '<span class="muted">—</span>'}</td>
       <td><input class="input" style="width:74px;min-height:34px;padding:4px 8px" type="number" min="0" value="${p.stock}" data-stock="${p.id}" aria-label="Stock"></td>
@@ -184,6 +188,7 @@ function openProductEditor(shop, id) {
     body: `<form id="pForm" class="dash-grid" style="grid-template-columns:1.4fr 1fr;margin:0" novalidate>
       <div class="form-grid">
         <div class="field full"><label>Product name</label><input class="input" name="name" value="${esc(p.name)}" placeholder="e.g. Five wick pahana, 18 inch"></div>
+        <div class="field full si-field"><label>Product name</label><input class="input" name="name_si" value="${esc(p.name_si || '')}" placeholder="උදා: වැටි 5 පහන, අඟල් 18" lang="si"></div>
         <div class="field"><label>Category</label><select class="input" name="category">${CATEGORIES.map(c => `<option value="${c.id}" ${p.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
         <div class="field"><label>Label on photo</label><select class="input" name="badge">${['', 'New', 'Bestseller', 'Handmade', 'Made to order', 'Limited', 'Masterpiece', 'Set'].map(b => `<option ${p.badge === b ? 'selected' : ''} value="${b}">${b || 'None'}</option>`).join('')}</select></div>
         <div class="field"><label>Price (Rs.)</label><input class="input" name="price" type="number" min="0" value="${esc(p.price)}"></div>
@@ -195,6 +200,7 @@ function openProductEditor(shop, id) {
         <div class="field"><label>Size</label><input class="input" name="dimensions" value="${esc(p.dimensions)}" placeholder="H 46 cm, base 14 cm"></div>
         <div class="field"><label>Weight</label><input class="input" name="weight" value="${esc(p.weight)}" placeholder="2.4 kg"></div>
         <div class="field full"><label>Description</label><textarea class="input" name="description" placeholder="How it is made, where it is used, what makes it special">${esc(p.description)}</textarea></div>
+        <div class="field full si-field"><label>Description</label><textarea class="input" name="description_si" lang="si" placeholder="නිපදවන ආකාරය, භාවිතය, විශේෂත්වය">${esc(p.description_si || '')}</textarea><span class="hint">Buyers who choose Sinhala see these. Leave empty to show the English text.</span></div>
         <div class="field full"><label>Photos (first photo is the cover)</label>
           <div class="img-pick" id="imgList"></div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
@@ -211,7 +217,7 @@ function openProductEditor(shop, id) {
   const f = back.querySelector('#pForm');
   const read = () => {
     const v = Object.fromEntries(new FormData(f));
-    return { ...p, id: p.id || 'preview', name: v.name || 'Product name', category: v.category, badge: v.badge, price: +v.price || 0, stock: Math.max(0, +v.stock || 0), discount: Math.min(90, Math.max(0, +v.discount || 0)), dealEnds: v.dealEnds ? new Date(v.dealEnds).getTime() : null, material: v.material, finish: v.finish, dimensions: v.dimensions, weight: v.weight, description: v.description, images: imgs.length ? imgs : [FALLBACK_IMG], rating: p.rating || 0, reviews: p.reviews || 0 };
+    return { ...p, id: p.id || 'preview', name: v.name || 'Product name', category: v.category, badge: v.badge, price: +v.price || 0, stock: Math.max(0, +v.stock || 0), discount: Math.min(90, Math.max(0, +v.discount || 0)), dealEnds: v.dealEnds ? new Date(v.dealEnds).getTime() : null, material: v.material, finish: v.finish, dimensions: v.dimensions, weight: v.weight, description: v.description, name_si: v.name_si, description_si: v.description_si, images: imgs.length ? imgs : [FALLBACK_IMG], rating: p.rating || 0, reviews: p.reviews || 0 };
   };
   const draw = () => {
     back.querySelector('#imgList').innerHTML = imgs.map((src, i) => `<button type="button" class="${i ? '' : 'on'}" data-cover="${i}" title="Make cover"><img src="${esc(src)}" alt=""><span class="x" data-rm="${i}" aria-label="Remove">×</span></button>`).join('') || '<small class="muted">No photos yet.</small>';
@@ -234,7 +240,7 @@ function openProductEditor(shop, id) {
     if (!f.elements.name.value.trim()) { toast('Give the product a name.', true); return; }
     if (!(v.price > 0)) { toast('Enter a price.', true); return; }
     if (!imgs.length) { toast('Add at least one photo.', true); return; }
-    const data = { name: f.elements.name.value.trim(), category: v.category, badge: v.badge, price: v.price, stock: v.stock, discount: v.discount, dealEnds: v.discount ? v.dealEnds : null, material: v.material, finish: v.finish, dimensions: v.dimensions, weight: v.weight, description: v.description, images: imgs };
+    const data = { name: f.elements.name.value.trim(), category: v.category, badge: v.badge, price: v.price, stock: v.stock, discount: v.discount, dealEnds: v.discount ? v.dealEnds : null, material: v.material, finish: v.finish, dimensions: v.dimensions, weight: v.weight, description: v.description, name_si: (v.name_si || '').trim(), description_si: (v.description_si || '').trim(), images: imgs };
     if (id) { Object.assign(Store.product(id), data); Store.log(`updated product ${data.name}`); }
     else {
       Store.s.products.push({ ...data, id: 'p' + Date.now(), shopId: shop.id, sold: 0, views: 0, rating: 0, reviews: 0, createdAt: Date.now(), active: true, spotlight: false, demoDealHours: 0 });
@@ -284,7 +290,7 @@ function dealsView(shop) {
   return `${head('Deals & coupons', 'Discounts with a timer appear in Flash deals on the home page and the deals page. Buyers see the countdown on every card.')}
     <div class="card"><h3>Product deals</h3>
     <div class="table-wrap" style="border:0"><table class="t"><thead><tr><th>Product</th><th>Price now</th><th>Current deal</th><th>Set a deal</th></tr></thead><tbody>
-    ${prods.map(p => `<tr><td style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(p.images[0])}" alt=""><span><b>${esc(p.name)}</b>${Store.soldOut(p) ? '<br><span class="badge red">Sold out</span>' : ''}</span></td>
+    ${prods.map(p => `<tr><td style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(p.images[0])}" alt=""><span><b>${esc(L(p, 'name'))}</b>${Store.soldOut(p) ? '<br><span class="badge red">Sold out</span>' : ''}</span></td>
       <td>${money(Store.priceOf(p))}<br><small class="muted">Regular ${money(p.price)}</small></td>
       <td>${Store.dealActive(p) ? `<span class="badge red">−${p.discount}%</span> ${p.dealEnds ? `<small data-countdown="${p.dealEnds}">${countdownText(p.dealEnds)}</small>` : '<small class="muted">no end date</small>'}` : '<span class="muted">None</span>'}</td>
       <td><form data-deal-form="${p.id}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -308,25 +314,25 @@ function dealsView(shop) {
       <div class="card"><h3>Spotlight on the home page</h3>
         <p class="muted" style="font-size:.92rem">Feature one product in the “In the spotlight” section. Requests are approved by the platform. Fee is added to your monthly statement.</p>
         <form id="spotForm" class="form-grid">
-          <div class="field full"><label>Product</label><select class="input" name="productId">${prods.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
+          <div class="field full"><label>Product</label><select class="input" name="productId">${prods.map(p => `<option value="${p.id}">${esc(L(p, 'name'))}</option>`).join('')}</select></div>
           <div class="field"><label>Duration</label><select class="input" name="days"><option value="7">7 days — Rs. 1,500</option><option value="14">14 days — Rs. 2,500</option></select></div>
           <div class="field" style="align-self:end"><button class="btn btn-brass" ${prods.length ? '' : 'disabled'}>Request spotlight</button></div>
         </form>
-        ${spots.length ? `<div style="margin-top:14px">${spots.map(s => `<div class="sum-row"><span>${esc(Store.product(s.productId)?.name || '')} · ${s.days} days</span><span class="status st-${s.status === 'active' ? 'delivered' : s.status === 'declined' ? 'cancelled' : 'pending'}">${s.status}</span></div>`).join('')}</div>` : ''}
+        ${spots.length ? `<div style="margin-top:14px">${spots.map(s => `<div class="sum-row"><span>${esc(L(Store.product(s.productId), 'name'))} · ${s.days} days</span><span class="status st-${s.status === 'active' ? 'delivered' : s.status === 'declined' ? 'cancelled' : 'pending'}">${s.status}</span></div>`).join('')}</div>` : ''}
       </div>
     </div>`;
 }
 
 /* ---------------- Shared: shop design ---------------- */
 function designView(shop) {
-  const d = { ...shop };
+  const d = { name_si: '', tagline_si: '', story_si: '', announcement_si: '', ...shop };
   onMount(() => {
     const f = document.getElementById('designForm');
     const prev = document.getElementById('designPreview');
     const paint = () => {
       prev.innerHTML = `<div style="--shop-c:${esc(d.color)}"><section class="store-hero"><img src="${esc(d.banner)}" alt=""></section>
-        <div class="store-head f-${esc(d.font)}"><div class="store-logo">${esc(initials(d.name))}</div><div><h1 style="font-size:1.3rem">${esc(d.name)}</h1><div class="muted">${esc(d.tagline)}</div></div></div>
-        <div style="padding:0 14px">${d.announcement ? `<div class="store-announce">${esc(d.announcement)}</div>` : ''}
+        <div class="store-head f-${esc(d.font)}"><div class="store-logo">${esc(initials(d.name))}</div><div><h1 style="font-size:1.3rem">${esc(L(d, 'name'))}</h1><div class="muted">${esc(L(d, 'tagline'))}</div></div></div>
+        <div style="padding:0 14px">${d.announcement ? `<div class="store-announce">${esc(L(d, 'announcement'))}</div>` : ''}
         <div class="layout-${esc(d.layout)}" style="margin-top:14px"><div class="grid">${Store.s.products.filter(p => p.shopId === shop.id).slice(0, d.layout === 'compact' ? 4 : d.layout === 'editorial' ? 2 : 3).map(p => productCard(p, { hideShop: true })).join('') || '<p class="muted">Your products will appear here.</p>'}</div></div></div></div>`;
       document.querySelectorAll('[data-color]').forEach(b => b.classList.toggle('on', b.dataset.color === d.color));
       document.querySelectorAll('[data-banner]').forEach(b => b.classList.toggle('on', b.dataset.banner === d.banner));
@@ -338,7 +344,7 @@ function designView(shop) {
     document.getElementById('bannerFile').addEventListener('change', async e => { if (e.target.files[0]) { d.banner = await fileToDataURL(e.target.files[0], 1600); paint(); } });
     f.addEventListener('submit', e => {
       e.preventDefault();
-      ['color', 'banner', 'tagline', 'story', 'announcement', 'layout', 'font', 'hours'].forEach(k => { shop[k] = d[k]; });
+      ['color', 'banner', 'tagline', 'story', 'announcement', 'layout', 'font', 'hours', 'name_si', 'tagline_si', 'story_si', 'announcement_si'].forEach(k => { shop[k] = d[k] || ''; });
       shop.designed = true;
       Store.log(`updated the design of ${shop.name}`); Store.save(); toast('Shop design saved. Buyers see the changes now.'); App.render();
     });
@@ -353,6 +359,12 @@ function designView(shop) {
         <div class="field" style="margin-top:16px"><label>Tagline</label><input class="input" name="tagline" maxlength="70" value="${esc(shop.tagline)}"></div>
         <div class="field" style="margin-top:12px"><label>Announcement bar</label><input class="input" name="announcement" maxlength="90" value="${esc(shop.announcement)}" placeholder="e.g. Free delivery in Kandy this week"></div>
         <div class="field" style="margin-top:12px"><label>Your story</label><textarea class="input" name="story">${esc(shop.story)}</textarea></div>
+        <div style="margin-top:16px;display:grid;gap:12px"><b>Sinhala version of your shop page</b>
+          <div class="field si-field"><label>Shop name</label><input class="input" name="name_si" lang="si" value="${esc(shop.name_si || '')}" placeholder="උදා: හේරත් පිත්තල වැඩපොළ"></div>
+          <div class="field si-field"><label>Tagline</label><input class="input" name="tagline_si" lang="si" maxlength="90" value="${esc(shop.tagline_si || '')}"></div>
+          <div class="field si-field"><label>Announcement bar</label><input class="input" name="announcement_si" lang="si" maxlength="120" value="${esc(shop.announcement_si || '')}"></div>
+          <div class="field si-field"><label>Your story</label><textarea class="input" name="story_si" lang="si">${esc(shop.story_si || '')}</textarea></div>
+        </div>
         <div class="field" style="margin-top:12px"><label>Opening hours</label><input class="input" name="hours" value="${esc(shop.hours)}"></div>
         <div class="form-grid" style="margin-top:12px">
           <div class="field"><label>Product layout</label>${[['classic', 'Classic grid'], ['editorial', 'Large photos'], ['compact', 'Compact']].map(([v, l]) => `<label class="chk"><input type="radio" name="layout" value="${v}" ${shop.layout === v ? 'checked' : ''}> ${l}</label>`).join('')}</div>
@@ -398,17 +410,17 @@ function insightsView(shop) {
     <div class="dash-grid">
       <div class="card"><h3>Your products against the market</h3>
         ${rows.length ? rows.map(r => `<div class="insight"><img src="${esc(r.p.images[0])}" alt=""><div>
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(r.p.name)}</b><span>${money(Store.priceOf(r.p))} · <b>#${r.rank}</b> cheapest of ${r.total}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(L(r.p, 'name'))}</b><span>${money(Store.priceOf(r.p))} · <b>#${r.rank}</b> cheapest of ${r.total}</span></div>
           ${r.others.length ? `<div class="range-track" title="Price range in category"><div class="band" style="left:0;right:0"></div><div class="avg" style="left:${(r.avg - r.min) / Math.max(1, r.max - r.min) * 100}%" title="Average"></div><div class="me" style="left:${(Store.priceOf(r.p) - r.min) / Math.max(1, r.max - r.min) * 100}%"></div></div>
           <small class="muted">${money(r.min)} lowest · ${money(r.avg)} average · ${money(r.max)} highest</small>` : ''}
           <p style="margin:6px 0 0;font-size:.9rem">${icon('target')} ${esc(r.tip)}</p>
-          ${r.others.length ? `<details style="margin-top:6px"><summary style="cursor:pointer;font-size:.85rem;font-weight:700">See ${r.others.length} competing piece${r.others.length > 1 ? 's' : ''}</summary>${r.others.map(x => `<div class="sum-row" style="font-size:.86rem"><a href="#/product/${x.id}" style="text-decoration:underline">${esc(x.name)}</a><span>${esc(Store.shop(x.shopId).name)} · ${money(Store.priceOf(x))}${Store.dealActive(x) ? ` <span class="badge red">−${x.discount}%</span>` : ''}${Store.soldOut(x) ? ' <span class="badge red">sold out</span>' : ''}</span></div>`).join('')}</details>` : ''}
+          ${r.others.length ? `<details style="margin-top:6px"><summary style="cursor:pointer;font-size:.85rem;font-weight:700">See ${r.others.length} competing piece${r.others.length > 1 ? 's' : ''}</summary>${r.others.map(x => `<div class="sum-row" style="font-size:.86rem"><a href="#/product/${x.id}" style="text-decoration:underline">${esc(L(x, 'name'))}</a><span>${esc(L(Store.shop(x.shopId), 'name'))} · ${money(Store.priceOf(x))}${Store.dealActive(x) ? ` <span class="badge red">−${x.discount}%</span>` : ''}${Store.soldOut(x) ? ' <span class="badge red">sold out</span>' : ''}</span></div>`).join('')}</details>` : ''}
         </div></div>`).join('') : '<p class="muted">Add products to see how they compare.</p>'}
       </div>
       <div>
         <div class="card"><h3>What buyers are ordering</h3><p class="muted" style="font-size:.85rem;margin-top:-8px">Units sold by category across the marketplace. Your categories in red.</p><div class="chart-box"><canvas id="demandChart"></canvas></div></div>
         <div class="card"><h3>Shops in your categories</h3>
-          ${rivals.map(x => `<div class="sum-row" style="padding:10px 0;border-bottom:1px solid var(--line)"><a href="#/store/${x.s.id}" style="display:flex;gap:10px;align-items:center">${shopLogo(x.s)}<span><b>${esc(x.s.name)}</b><br><small class="muted">${x.ps.length} competing pieces · ${stars(x.s.rating)}</small></span></a><span style="text-align:right">${x.deals ? `<span class="badge red">${x.deals} deal${x.deals > 1 ? 's' : ''}, avg ${x.avgDisc}%</span>` : '<small class="muted">No deals</small>'}<br><small class="muted">${moneyShort(x.st.revenue)} / 30d</small></span></div>`).join('') || '<p class="muted">No competitors yet.</p>'}
+          ${rivals.map(x => `<div class="sum-row" style="padding:10px 0;border-bottom:1px solid var(--line)"><a href="#/store/${x.s.id}" style="display:flex;gap:10px;align-items:center">${shopLogo(x.s)}<span><b>${esc(L(x.s, 'name'))}</b><br><small class="muted">${x.ps.length} competing pieces · ${stars(x.s.rating)}</small></span></a><span style="text-align:right">${x.deals ? `<span class="badge red">${x.deals} deal${x.deals > 1 ? 's' : ''}, avg ${x.avgDisc}%</span>` : '<small class="muted">No deals</small>'}<br><small class="muted">${moneyShort(x.st.revenue)} / 30d</small></span></div>`).join('') || '<p class="muted">No competitors yet.</p>'}
         </div>
       </div>
     </div>`;
@@ -450,10 +462,10 @@ function shopOverview(shop, u, title) {
     chart('salesChart', lineCfg(s.labels, [{ label: 'Sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(123,28,28,.08)', fill: true }]));
     chart('statusChart', doughnutCfg(ORDER_FLOW.map(x => STATUS_LABEL[x]), statusCounts, ['#E0A030', '#4A7BC0', '#8C6BC9', '#2E9AA6', '#1E7B34']));
   }
-  return `${head(title || `Ayubowan, ${esc(u.name.split(' ')[0])}`, `${esc(shop.name)} · ${SHOP_STATUS_LABEL[shop.status]}`, shop.status === 'published' ? `<a class="btn btn-ghost" href="#/store/${shop.id}">${icon('eye')} View shop</a><button class="btn btn-brass" data-action="edit-product" data-id="">${icon('plus')} Add product</button>` : '')}
+  return `${head(title || `Ayubowan, ${esc(u.name.split(' ')[0])}`, `${esc(L(shop, 'name'))} · ${SHOP_STATUS_LABEL[shop.status]}`, shop.status === 'published' ? `<a class="btn btn-ghost" href="#/store/${shop.id}">${icon('eye')} View shop</a><button class="btn btn-brass" data-action="edit-product" data-id="">${icon('plus')} Add product</button>` : '')}
     ${shop.status !== 'published' ? `<div class="card" style="margin-bottom:16px"><h3>Your application</h3>${applicationPipeline(shop)}<p class="muted">While you wait, set up your <a href="#/dashboard/design" style="text-decoration:underline">shop design</a> and <a href="#/dashboard/products" style="text-decoration:underline">add products</a> so you are ready on day one.</p></div>` : ''}
     ${pending.length ? `<div class="notice"><b>${pending.length} new order${pending.length > 1 ? 's' : ''} waiting for confirmation.</b> Send each buyer the WhatsApp confirmation, then mark the order confirmed. <a href="#/dashboard/orders?status=pending" style="text-decoration:underline">Open orders</a></div>` : ''}
-    ${soldOut.length || lowStock.length ? `<div class="notice red">${soldOut.length ? `<b>${soldOut.length} sold out:</b> ${soldOut.map(p => esc(p.name)).join(', ')}. ` : ''}${lowStock.length ? `<b>Low stock:</b> ${lowStock.map(p => `${esc(p.name)} (${p.stock})`).join(', ')}.` : ''} <a href="#/dashboard/products" style="text-decoration:underline">Update stock</a></div>` : ''}
+    ${soldOut.length || lowStock.length ? `<div class="notice red">${soldOut.length ? `<b>${soldOut.length} sold out:</b> ${soldOut.map(p => esc(p.name)).join(', ')}. ` : ''}${lowStock.length ? `<b>Low stock:</b> ${lowStock.map(p => `${esc(L(p, 'name'))} (${p.stock})`).join(', ')}.` : ''} <a href="#/dashboard/products" style="text-decoration:underline">Update stock</a></div>` : ''}
     <div class="kpis">
       ${kpi('Sales, last 30 days', money(st30.revenue), `${st30.orders} orders · ${st30.items} pieces`, 'accent')}
       ${kpi('You keep (delivered)', money(com.net), `after ${com.rates.total}% commission`)}
@@ -466,8 +478,8 @@ function shopOverview(shop, u, title) {
       <div class="card"><h3>Orders by status</h3><div class="chart-box"><canvas id="statusChart"></canvas></div></div>
     </div>` : ''}
     <div class="dash-grid">
-      <div class="card"><h3>Best sellers</h3>${top.map(p => `<div class="sum-row" style="align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(p.images[0])}" alt="">${esc(p.name)}${Store.soldOut(p) ? ' <span class="badge red">sold out</span>' : ''}</span><span><b>${p.sold}</b> sold</span></div>`).join('') || '<p class="muted">No products yet.</p>'}</div>
-      <div class="card"><h3>Latest orders</h3>${all.sort((a, b) => b.createdAt - a.createdAt).slice(0, 6).map(o => `<div class="sum-row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>${esc(o.id)}</b> · ${esc(o.customer.name)}<br><small class="muted">${ago(o.createdAt)}</small></span><span style="text-align:right">${money(o.total)}<br>${statusPill(o.status)}</span></div>`).join('') || '<p class="muted">No orders yet.</p>'}</div>
+      <div class="card"><h3>Best sellers</h3>${top.map(p => `<div class="sum-row" style="align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="display:flex;gap:10px;align-items:center"><img class="t-img" src="${esc(p.images[0])}" alt="">${esc(L(p, 'name'))}${Store.soldOut(p) ? ' <span class="badge red">sold out</span>' : ''}</span><span><b>${p.sold}</b> sold</span></div>`).join('') || '<p class="muted">No products yet.</p>'}</div>
+      <div class="card"><h3>Latest orders</h3>${all.sort((a, b) => b.createdAt - a.createdAt).slice(0, 6).map(o => `<div class="sum-row" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><b>${esc(o.id)}</b> · ${esc(L(o.customer, 'name'))}<br><small class="muted">${ago(o.createdAt)}</small></span><span style="text-align:right">${money(o.total)}<br>${statusPill(o.status)}</span></div>`).join('') || '<p class="muted">No orders yet.</p>'}</div>
     </div>`;
 }
 
@@ -504,10 +516,10 @@ function applicationView(shop, u) {
     });
   });
   const next = {
-    pending_payment: `<h3>Waiting for the region agent</h3><p>${esc(agent.name)}, the ${esc(r.name)} region agent, is checking that your <b>${money(shop.payment.amount)}</b> registration fee has reached the account below. This usually takes 1–2 working days. You will get an email as soon as it is confirmed.</p>
+    pending_payment: `<h3>Waiting for the region agent</h3><p>${esc(`${agent.name}, the ${r.name} region agent, is checking that your ${money(shop.payment.amount)} registration fee has reached the account below. This usually takes 1–2 working days. You will get an email as soon as it is confirmed.`)}</p>
       <dl class="specs" style="grid-template-columns:150px 1fr"><dt>Your reference</dt><dd>${esc(shop.payment.ref)}</dd><dt>Paid to</dt><dd>${esc(r.accName)}, ${esc(r.bank)}, ${esc(r.accNo)}</dd><dt>Submitted</dt><dd>${fmtDateTime(shop.payment.at)}</dd></dl>
       <a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(agent.phone, `Hello ${agent.name}, I applied to open "${shop.name}" on Pittala.lk. Payment reference: ${shop.payment.ref}. Could you please confirm?`)}">${icon('wa')} Message the agent</a>`,
-    agent_approved: `<h3>Payment confirmed — final review</h3><p>The region agent confirmed your payment on <b>${fmtDate(shop.approvals.agentAt)}</b>. The Pittala.lk platform team is doing a final check of your shop details. Once approved, your shop and products go live immediately and you will receive an email.</p>`,
+    agent_approved: `<h3>Payment confirmed — final review</h3><p>${esc(`The region agent confirmed your payment on ${fmtDate(shop.approvals.agentAt)}.`)} The Pittala.lk platform team is doing a final check of your shop details. Once approved, your shop and products go live immediately and you will receive an email.</p>`,
     rejected: `<h3>Your application needs changes</h3><div class="notice red"><b>Reason:</b> ${esc(shop.rejectReason || 'Not given')}</div><p>Fix the issue and send the application back to the region agent.</p>
       <form id="resubmit" class="form-grid"><div class="field"><label>Payment reference</label><input class="input" name="ref" value="${esc(shop.payment.ref)}"></div>
       <div class="field"><label>New deposit slip (optional)</label><label class="upload-drop" style="padding:10px">${icon('doc')} Choose photo<input type="file" id="reSlip" accept="image/*" class="sr"></label></div>
@@ -515,7 +527,7 @@ function applicationView(shop, u) {
       <div class="field"><button class="btn btn-brass">Resubmit application</button></div></form>`,
     suspended: `<h3>Shop suspended</h3><p>Your shop is hidden from buyers. Contact the region agent to resolve this.</p><a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(agent.phone, `Hello ${agent.name}, about my suspended shop ${shop.name} on Pittala.lk.`)}">${icon('wa')} Message the agent</a>`
   }[shop.status] || '';
-  return `${head('Your shop application', `${esc(shop.name)} · ${SHOP_STATUS_LABEL[shop.status]}`)}
+  return `${head('Your shop application', `${esc(L(shop, 'name'))} · ${SHOP_STATUS_LABEL[shop.status]}`)}
     <div class="card" style="margin-bottom:16px"><h3>Approval progress</h3>${applicationPipeline(shop).replace(/<div class="notice red">[\s\S]*$/, '')}</div>
     <div class="dash-grid">
       <div class="card">${next}</div>
@@ -533,7 +545,7 @@ DashViews.owner.statement = (q, u) => statementView(Store.shop(u.shopId));
 DashViews.owner.reviews = (q, u) => {
   const rs = Store.s.reviews.filter(r => r.shopId === u.shopId);
   return `${head('Reviews', `${rs.length} reviews · average ${rs.length ? (rs.reduce((a, r) => a + r.rating, 0) / rs.length).toFixed(1) : '—'}`)}
-  <div class="card">${rs.map(r => { const p = Store.product(r.productId); return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><b>${esc(r.name)} · ${stars(r.rating)}</b><small class="muted">${fmtDate(r.at)}</small></div><small class="muted">${esc(p?.name || '')}</small><p style="margin:6px 0 0">${esc(r.text)}</p></div>`; }).join('') || '<p class="muted">No reviews yet.</p>'}</div>`;
+  <div class="card">${rs.map(r => { const p = Store.product(r.productId); return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><b>${esc(L(r, 'name'))} · ${stars(r.rating)}</b><small class="muted">${fmtDate(r.at)}</small></div><small class="muted">${esc(p?.name || '')}</small><p style="margin:6px 0 0">${esc(r.text)}</p></div>`; }).join('') || '<p class="muted">No reviews yet.</p>'}</div>`;
 };
 DashViews.owner.profile = (q, u) => {
   const s = Store.shop(u.shopId);
@@ -580,7 +592,7 @@ DashViews.agent.overview = (q, u) => {
   const byShop = live.filter(x => !Store.isAgentShop(x)).map(x => ({ x, v: Store.commission(x, Store.shopStats(x.id).revenue).agent }));
   chart('regionChart', lineCfg(s.labels, [{ label: 'Region sales', data: s.data, borderColor: PATINA, backgroundColor: 'rgba(123,28,28,.08)', fill: true }, { label: `Your ${Store.s.settings.agentRate}%`, data: earn.data, borderColor: BRASS }]));
   chart('agentShops', barCfg(byShop.map(b => b.x.name), byShop.map(b => b.v), BRASS, true));
-  return `${head(`${esc(r.name)} region`, `You onboard and support shops in ${esc(r.name)}, and earn ${Store.s.settings.agentRate}% of their delivered sales. Your own shop pays only the ${Store.s.settings.platformRate}% platform share.`)}
+  return `${head(`${esc(L(r, 'name'))} region`, `You onboard and support shops in ${esc(L(r, 'name'))}, and earn ${Store.s.settings.agentRate}% of their delivered sales. Your own shop pays only the ${Store.s.settings.platformRate}% platform share.`)}
     ${apps.length ? `<div class="notice"><b>${apps.length} application${apps.length > 1 ? 's' : ''} waiting for payment verification.</b> <a href="#/dashboard/applications" style="text-decoration:underline">Review now</a></div>` : ''}
     <div class="kpis">
       ${kpi(`Your ${Store.s.settings.agentRate}% earned, 30 days`, money(myEarn), 'on delivered orders', 'accent')}
@@ -598,7 +610,7 @@ DashViews.agent.overview = (q, u) => {
 function regionShopsTable(shops, isAgent) {
   return `<div class="table-wrap" style="border:0"><table class="t"><thead><tr><th>Shop</th><th>Owner</th><th>Status</th><th>Products</th><th>Sales 30d</th><th>Rate</th><th></th></tr></thead><tbody>
     ${shops.map(s => { const o = Store.userById(s.ownerId); const st = Store.shopStats(s.id); return `<tr>
-      <td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">${esc(Store.region(s.regionId)?.name || '')}</small></span></span></td>
+      <td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(L(s, 'name'))}</b><br><small class="muted">${esc(Store.region(s.regionId)?.name || '')}</small></span></span></td>
       <td>${esc(o?.name || '')}<br><small class="muted">${esc(s.phone)}</small></td>
       <td>${statusPill(s.status)}</td>
       <td>${Store.s.products.filter(p => p.shopId === s.id).length}</td>
@@ -616,7 +628,7 @@ DashViews.agent.applications = (q, u) => {
   const shops = Store.s.shops.filter(s => s.regionId === u.regionId && ['pending_payment', 'agent_approved', 'rejected'].includes(s.status)).sort((a, b) => b.createdAt - a.createdAt);
   return `${head('Shop applications', `Confirm the ${money(Store.s.settings.regFee)} registration fee has reached your account, then approve. The platform gives final approval and publishes the shop.`)}
     ${shops.length ? `<div class="table-wrap"><table class="t"><thead><tr><th>Shop</th><th>Applied</th><th>Payment reference</th><th>Agreement</th><th>Status</th><th></th></tr></thead><tbody>
-    ${shops.map(s => `<tr><td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">${esc(Store.userById(s.ownerId)?.name || '')}</small></span></span></td>
+    ${shops.map(s => `<tr><td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(L(s, 'name'))}</b><br><small class="muted">${esc(Store.userById(s.ownerId)?.name || '')}</small></span></span></td>
       <td>${fmtDate(s.createdAt)}</td><td><b>${esc(s.payment?.ref || '')}</b><br><small class="muted">${esc(s.payment?.method || 'Bank deposit')} · ${money(s.payment?.amount)}</small></td>
       <td>${s.agreement ? `Signed ${s.agreement.rate}%` : '—'}</td><td>${statusPill(s.status)}</td>
       <td><button class="btn ${s.status === 'pending_payment' ? 'btn-brass' : 'btn-ghost'} btn-sm" data-action="app" data-id="${s.id}">${s.status === 'pending_payment' ? 'Verify & approve' : 'View'}</button></td></tr>`).join('')}
@@ -637,7 +649,7 @@ DashViews.agent.collections = (q, u) => {
 
 function settlementTable(rows, mode) {
   return `<div class="table-wrap"><table class="t"><thead><tr><th>Month</th><th>Shop</th><th>Delivered sales</th><th>Agent share</th><th>Platform share</th><th>${mode === 'agent' ? 'Agent share received' : 'Platform share received'}</th><th></th></tr></thead><tbody>
-    ${rows.map(r => `<tr><td>${monthName(r.month)}</td><td>${esc(r.shop.name)}</td><td>${money(r.sales)}</td><td>${money(r.agent)}</td><td>${money(r.platform)}</td>
+    ${rows.map(r => `<tr><td>${monthName(r.month)}</td><td>${esc(L(r.shop, 'name'))}</td><td>${money(r.sales)}</td><td>${money(r.agent)}</td><td>${money(r.platform)}</td>
       <td>${mode === 'agent' && r.agent === 0 ? '<span class="muted">Own shop</span>' : `<label class="switch"><input type="checkbox" data-action="settle" data-key="${esc(r.key)}" data-field="${mode === 'agent' ? 'agentPaid' : 'platformPaid'}" ${r.state[mode === 'agent' ? 'agentPaid' : 'platformPaid'] ? 'checked' : ''}><span></span></label>`}</td>
       <td><a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(r.shop.whatsapp, `Hello ${r.shop.name}, your Pittala.lk commission for ${monthName(r.month)}: sales ${money(r.sales)}, ${mode === 'agent' ? `agent share ${money(r.agent)}` : `platform share ${money(r.platform)}`}. Thank you!`)}">${icon('wa')} Remind</a></td></tr>`).join('') || '<tr><td colspan="7" class="muted">No delivered orders yet.</td></tr>'}
   </tbody></table></div>`;
@@ -652,10 +664,10 @@ function openApplication(id, role) {
     title: s.name, wide: true,
     body: `${applicationPipeline(s)}
       <div class="dash-grid even" style="margin:0">
-        <div class="card"><b>Shop</b><dl class="specs" style="grid-template-columns:120px 1fr;font-size:.9rem"><dt>Tagline</dt><dd>${esc(s.tagline)}</dd><dt>Address</dt><dd>${esc(s.address)}</dd><dt>Region</dt><dd>${esc(Store.region(s.regionId)?.name || '')}</dd><dt>Established</dt><dd>${esc(s.est)}</dd><dt>Artisans</dt><dd>${esc(s.artisans)}</dd></dl></div>
+        <div class="card"><b>Shop</b><dl class="specs" style="grid-template-columns:120px 1fr;font-size:.9rem"><dt>Tagline</dt><dd>${esc(L(s, 'tagline'))}</dd><dt>Address</dt><dd>${esc(s.address)}</dd><dt>Region</dt><dd>${esc(Store.region(s.regionId)?.name || '')}</dd><dt>Established</dt><dd>${esc(s.est)}</dd><dt>Artisans</dt><dd>${esc(s.artisans)}</dd></dl></div>
         <div class="card"><b>Owner</b><dl class="specs" style="grid-template-columns:120px 1fr;font-size:.9rem"><dt>Name</dt><dd>${esc(o?.name || '')}</dd><dt>NIC</dt><dd>${esc(o?.nic || '—')}</dd><dt>Mobile</dt><dd>${esc(s.phone)}</dd><dt>WhatsApp</dt><dd>${esc(s.whatsapp)}</dd><dt>Email</dt><dd>${esc(s.email)}</dd></dl></div>
         <div class="card"><b>Registration payment</b><dl class="specs" style="grid-template-columns:120px 1fr;font-size:.9rem"><dt>Amount</dt><dd>${money(s.payment?.amount)}</dd><dt>Reference</dt><dd>${esc(s.payment?.ref || '')}</dd><dt>Method</dt><dd>${esc(s.payment?.method || 'Bank deposit')}</dd><dt>Submitted</dt><dd>${s.payment ? fmtDateTime(s.payment.at) : ''}</dd></dl>${s.payment?.slip ? `<img src="${s.payment.slip}" alt="Deposit slip" style="max-height:220px;border-radius:8px">` : '<small class="muted">No slip uploaded.</small>'}</div>
-        <div class="card"><b>Agreement</b><p style="font-size:.9rem;margin:8px 0">Signed by <span class="signature" style="font-size:1.3rem;border:0">${esc(s.agreement?.signedName || '')}</span> on ${s.agreement ? fmtDate(s.agreement.signedAt) : ''} at <b>${s.agreement?.rate}%</b> commission.</p><button class="btn btn-ghost btn-sm" data-action="view-agreement" data-id="${s.id}">Read agreement</button></div>
+        <div class="card"><b>Agreement</b><p style="font-size:.9rem;margin:8px 0">${esc(`Signed by ${s.agreement?.signedName || ''} on ${s.agreement ? fmtDate(s.agreement.signedAt) : ''} at ${s.agreement?.rate}% commission.`)}</p><button class="btn btn-ghost btn-sm" data-action="view-agreement" data-id="${s.id}">Read agreement</button></div>
       </div>
       ${(canAgent || canAdmin) ? `<div class="field" style="margin-top:14px"><label for="rejWhy">Reason if rejecting (sent to the applicant)</label><input class="input" id="rejWhy" placeholder="e.g. Payment not received yet"></div>` : ''}`,
     foot: `${canAgent || canAdmin ? `<button class="btn btn-ghost" data-action="app-reject" data-id="${s.id}">Reject</button>` : ''}
@@ -699,7 +711,7 @@ DashViews.super.overview = () => {
 DashViews.super.approvals = () => {
   const finals = Store.s.shops.filter(x => x.status === 'agent_approved');
   const withAgent = Store.s.shops.filter(x => x.status === 'pending_payment');
-  const row = s => `<tr><td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(s.name)}</b><br><small class="muted">${esc(Store.userById(s.ownerId)?.name || '')}</small></span></span></td><td>${esc(Store.region(s.regionId)?.name || '')}</td><td>${esc(s.payment?.ref || '')}</td><td>${s.approvals.agentAt ? fmtDate(s.approvals.agentAt) : '—'}</td><td>${statusPill(s.status)}</td><td><button class="btn ${s.status === 'agent_approved' ? 'btn-brass' : 'btn-ghost'} btn-sm" data-action="app" data-id="${s.id}">${s.status === 'agent_approved' ? 'Final review' : 'View'}</button></td></tr>`;
+  const row = s => `<tr><td><span class="shop-chip">${shopLogo(s)}<span><b>${esc(L(s, 'name'))}</b><br><small class="muted">${esc(Store.userById(s.ownerId)?.name || '')}</small></span></span></td><td>${esc(Store.region(s.regionId)?.name || '')}</td><td>${esc(s.payment?.ref || '')}</td><td>${s.approvals.agentAt ? fmtDate(s.approvals.agentAt) : '—'}</td><td>${statusPill(s.status)}</td><td><button class="btn ${s.status === 'agent_approved' ? 'btn-brass' : 'btn-ghost'} btn-sm" data-action="app" data-id="${s.id}">${s.status === 'agent_approved' ? 'Final review' : 'View'}</button></td></tr>`;
   return `${head('Final approvals', 'Shops reach you after the region agent confirms the registration payment. Approving publishes the shop to buyers.')}
     <div class="card"><h3>Waiting for you (${finals.length})</h3>${finals.length ? `<div class="table-wrap" style="border:0"><table class="t"><thead><tr><th>Shop</th><th>Region</th><th>Payment ref</th><th>Agent approved</th><th>Status</th><th></th></tr></thead><tbody>${finals.map(row).join('')}</tbody></table></div>` : '<p class="muted">Nothing to approve.</p>'}</div>
     <div class="card"><h3>With region agents (${withAgent.length})</h3>${withAgent.length ? `<div class="table-wrap" style="border:0"><table class="t"><thead><tr><th>Shop</th><th>Region</th><th>Payment ref</th><th>Agent approved</th><th>Status</th><th></th></tr></thead><tbody>${withAgent.map(row).join('')}</tbody></table></div>` : '<p class="muted">None.</p>'}</div>`;
@@ -720,11 +732,11 @@ DashViews.super.regions = () => {
   });
   return `${head('Regions & agents', 'Each region has one agent who onboards shops and earns the agent share. The agent’s own shop pays only the platform share.')}
     <div class="table-wrap" style="margin-bottom:16px"><table class="t"><thead><tr><th>Region</th><th>District</th><th>Agent</th><th>Agent’s shop</th><th>Shops</th><th>Payout account</th></tr></thead><tbody>
-      ${Store.s.regions.map(r => { const a = Store.userById(r.agentUserId); const s = r.agentShopId ? Store.shop(r.agentShopId) : null; return `<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.district)}</td><td>${esc(a?.name || '—')}<br><small class="muted">${esc(a?.phone || '')}</small></td><td>${s ? esc(s.name) : '<span class="muted">None yet</span>'}</td><td>${Store.s.shops.filter(x => x.regionId === r.id).length}</td><td><small>${esc(r.bank)}<br>${esc(r.accNo)}</small></td></tr>`; }).join('')}
+      ${Store.s.regions.map(r => { const a = Store.userById(r.agentUserId); const s = r.agentShopId ? Store.shop(r.agentShopId) : null; return `<tr><td><b>${esc(L(r, 'name'))}</b></td><td>${esc(r.district)}</td><td>${esc(a?.name || '—')}<br><small class="muted">${esc(a?.phone || '')}</small></td><td>${s ? esc(s.name) : '<span class="muted">None yet</span>'}</td><td>${Store.s.shops.filter(x => x.regionId === r.id).length}</td><td><small>${esc(r.bank)}<br>${esc(r.accNo)}</small></td></tr>`; }).join('')}
     </tbody></table></div>
     <form class="card" id="regionForm"><h3>Add a region</h3><div class="form-grid">
       <div class="field"><label>Region name</label><input class="input" name="name" placeholder="e.g. Kiriwaththuduwa"></div>
-      <div class="field"><label>District</label><select class="input" name="district">${DISTRICTS.map(d => `<option>${d}</option>`).join('')}</select></div>
+      <div class="field"><label>District</label><select class="input" name="district">${DISTRICTS.map(d => `<option value="${d}">${d}</option>`).join('')}</select></div>
       <div class="field"><label>Agent full name</label><input class="input" name="agentName"></div>
       <div class="field"><label>Agent mobile</label><input class="input" name="agentPhone"></div>
       <div class="field"><label>Agent email (sign-in)</label><input class="input" name="agentEmail" type="email"></div>
@@ -737,7 +749,7 @@ DashViews.super.buyers = () => {
   const ordersOf = b => Store.s.orders.filter(o => o.customer.email === b.email);
   return `${head('Buyers', 'Buyer accounts are created automatically at checkout. Login details are emailed to the buyer.')}
     <div class="table-wrap"><table class="t"><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Joined</th><th>Orders</th><th>Spent</th></tr></thead><tbody>
-    ${buyers.map(b => { const os = ordersOf(b); return `<tr><td><b>${esc(b.name)}</b></td><td>${esc(b.email)}</td><td>${esc(b.phone)}</td><td>${b.createdAt ? fmtDate(b.createdAt) : '—'}</td><td>${os.length}</td><td>${money(os.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0))}</td></tr>`; }).join('') || '<tr><td colspan="6" class="muted">No buyers yet.</td></tr>'}
+    ${buyers.map(b => { const os = ordersOf(b); return `<tr><td><b>${esc(L(b, 'name'))}</b></td><td>${esc(b.email)}</td><td>${esc(b.phone)}</td><td>${b.createdAt ? fmtDate(b.createdAt) : '—'}</td><td>${os.length}</td><td>${money(os.filter(o => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0))}</td></tr>`; }).join('') || '<tr><td colspan="6" class="muted">No buyers yet.</td></tr>'}
     </tbody></table></div>`;
 };
 DashViews.super.orders = (q) => `${head('All orders')}${ordersTable(Store.s.orders, q, { showShop: true, edit: true })}`;
@@ -747,7 +759,7 @@ DashViews.super.products = (q) => {
   return `${head('Products', 'Hide listings that break the rules, or feature great pieces on the home page.')}
     <form class="toolbar" onsubmit="event.preventDefault();location.hash='#/dashboard/products?q='+encodeURIComponent(this.elements.q.value)"><input class="input" name="q" value="${esc(q.q || '')}" placeholder="Search products or shops" style="max-width:320px"></form>
     <div class="table-wrap"><table class="t"><thead><tr><th></th><th>Product</th><th>Shop</th><th>Price</th><th>Stock</th><th>Sold</th><th>Visible</th><th>Spotlight</th></tr></thead><tbody>
-    ${list.map(p => `<tr><td><img class="t-img" src="${esc(p.images[0])}" alt=""></td><td><a href="#/product/${p.id}"><b>${esc(p.name)}</b></a><br><small class="muted">${esc(Store.cat(p.category).name)}</small></td><td>${esc(Store.shop(p.shopId).name)}</td><td>${money(Store.priceOf(p))}${Store.dealActive(p) ? ` <span class="badge red">−${p.discount}%</span>` : ''}</td><td>${p.stock || '<span class="badge red">Sold out</span>'}</td><td>${p.sold}</td>
+    ${list.map(p => `<tr><td><img class="t-img" src="${esc(p.images[0])}" alt=""></td><td><a href="#/product/${p.id}"><b>${esc(L(p, 'name'))}</b></a><br><small class="muted">${esc(L(Store.cat(p.category), 'name'))}</small></td><td>${esc(L(Store.shop(p.shopId), 'name'))}</td><td>${money(Store.priceOf(p))}${Store.dealActive(p) ? ` <span class="badge red">−${p.discount}%</span>` : ''}</td><td>${p.stock || '<span class="badge red">Sold out</span>'}</td><td>${p.sold}</td>
       <td><label class="switch"><input type="checkbox" data-action="toggle-active" data-id="${p.id}" ${p.active ? 'checked' : ''}><span></span></label></td>
       <td><label class="switch"><input type="checkbox" data-action="toggle-spot" data-id="${p.id}" ${p.spotlight ? 'checked' : ''}><span></span></label></td></tr>`).join('')}
     </tbody></table></div>`;
@@ -760,7 +772,7 @@ DashViews.super.commissions = () => {
 };
 DashViews.super.spotlights = () => `${head('Spotlight requests', 'Approved products appear in the home page spotlight.')}
   <div class="table-wrap"><table class="t"><thead><tr><th>Product</th><th>Shop</th><th>Duration</th><th>Fee</th><th>Requested</th><th>Status</th><th></th></tr></thead><tbody>
-  ${Store.s.spotlights.map(s => { const p = Store.product(s.productId); return `<tr><td>${esc(p?.name || '')}</td><td>${esc(Store.shop(s.shopId).name)}</td><td>${s.days} days</td><td>${money(s.fee)}</td><td>${fmtDate(s.at)}</td><td><span class="status st-${s.status === 'active' ? 'delivered' : s.status === 'declined' ? 'cancelled' : 'pending'}">${s.status}</span></td>
+  ${Store.s.spotlights.map(s => { const p = Store.product(s.productId); return `<tr><td>${esc(p?.name || '')}</td><td>${esc(L(Store.shop(s.shopId), 'name'))}</td><td>${s.days} days</td><td>${money(s.fee)}</td><td>${fmtDate(s.at)}</td><td><span class="status st-${s.status === 'active' ? 'delivered' : s.status === 'declined' ? 'cancelled' : 'pending'}">${s.status}</span></td>
     <td>${s.status === 'pending' ? `<div class="row-actions"><button class="btn btn-brass btn-sm" data-action="spot" data-id="${s.id}" data-s="active">Approve</button><button class="btn btn-ghost btn-sm" data-action="spot" data-id="${s.id}" data-s="declined">Decline</button></div>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="muted">No requests.</td></tr>'}
   </tbody></table></div>`;
 DashViews.super.outbox = () => `${head('Email outbox', 'Emails sent automatically on new orders, status changes and applications. Connect a mail service (see README) to deliver them for real.')}
@@ -798,8 +810,8 @@ DashViews.super.settings = () => {
 DashViews.customer.orders = (q, u) => {
   const mine = Store.s.orders.filter(o => o.customer.email === u.email || normPhone(o.customer.phone).slice(-9) === normPhone(u.phone).slice(-9)).sort((a, b) => b.createdAt - a.createdAt);
   return `${head('My orders', 'Pay each shop in cash when your parcel arrives.', '<a class="btn btn-brass" href="#/shop">Shop more</a>')}
-    ${mine.length ? mine.map(o => { const s = Store.shop(o.shopId); return `<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div style="display:flex;gap:10px;align-items:center">${shopLogo(s)}<div><b>${esc(o.id)}</b> · ${esc(s.name)}<br><small class="muted">${fmtDateTime(o.createdAt)}</small></div></div><div style="text-align:right">${statusPill(o.status)}<br><b>${money(o.total)}</b></div></div>
-      <div style="margin-top:10px">${o.items.map(i => `<span class="badge" style="margin:2px">${i.qty} × ${esc(i.name)}</span>`).join('')}</div>
+    ${mine.length ? mine.map(o => { const s = Store.shop(o.shopId); return `<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div style="display:flex;gap:10px;align-items:center">${shopLogo(s)}<div><b>${esc(o.id)}</b> · ${esc(L(s, 'name'))}<br><small class="muted">${fmtDateTime(o.createdAt)}</small></div></div><div style="text-align:right">${statusPill(o.status)}<br><b>${money(o.total)}</b></div></div>
+      <div style="margin-top:10px">${o.items.map(i => `<span class="badge" style="margin:2px">${i.qty} × ${esc(itemName(i))}</span>`).join('')}</div>
       <div class="row-actions" style="margin-top:12px"><a class="btn btn-ghost btn-sm" href="#/track?id=${o.id}&phone=${encodeURIComponent(o.customer.phone)}">Track</a><a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(s.whatsapp, `Hello ${s.name}, about my order ${o.id}:`)}">${icon('wa')} Message shop</a>${o.status === 'delivered' ? `<a class="btn btn-ghost btn-sm" href="#/product/${o.items[0].productId}">Write a review</a>` : ''}</div></div>`; }).join('') : '<div class="card empty"><h3>No orders yet</h3><a class="btn btn-dark" href="#/shop">Start shopping</a></div>'}`;
 };
 DashViews.customer.profile = (q, u) => {
@@ -817,7 +829,7 @@ DashViews.customer.profile = (q, u) => {
     });
   });
   return `${head('Profile', 'Your account was created automatically with your first order.')}
-    <div class="dash-grid even"><div class="card"><h3>Your details</h3><dl class="specs" style="grid-template-columns:90px 1fr"><dt>Name</dt><dd>${esc(u.name)}</dd><dt>Email</dt><dd>${esc(u.email)}</dd><dt>Mobile</dt><dd>${esc(u.phone)}</dd><dt>Joined</dt><dd>${u.createdAt ? fmtDate(u.createdAt) : '—'}</dd></dl><p class="muted" style="font-size:.9rem">These are filled in for you at checkout.</p></div>
+    <div class="dash-grid even"><div class="card"><h3>Your details</h3><dl class="specs" style="grid-template-columns:90px 1fr"><dt>Name</dt><dd>${esc(L(u, 'name'))}</dd><dt>Email</dt><dd>${esc(u.email)}</dd><dt>Mobile</dt><dd>${esc(u.phone)}</dd><dt>Joined</dt><dd>${u.createdAt ? fmtDate(u.createdAt) : '—'}</dd></dl><p class="muted" style="font-size:.9rem">These are filled in for you at checkout.</p></div>
     <form class="card" id="pwForm"><h3>Change password</h3>
       <div class="field"><label>Current password</label><input class="input" name="current" type="password" autocomplete="current-password"></div>
       <div class="field" style="margin-top:10px"><label>New password</label><input class="input" name="next" type="password" autocomplete="new-password"></div>

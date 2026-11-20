@@ -36,16 +36,21 @@ const ICONS = {
   pause: '<path d="M8 5v14M16 5v14"/>',
   play: '<path d="M7 5v14l12-7z"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
 };
 const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 const LOGO_MARK = `<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true">
-  <circle cx="20" cy="20" r="19" fill="#7B1C1C"/>
-  <path d="M20 7.5c2.2 2.7 3 4.6 3 6.1a3 3 0 0 1-6 0c0-1.5.8-3.4 3-6.1z" fill="#F3DD9B"/>
-  <path d="M10.5 18.5h19c-.9 4-4.8 6.8-9.5 6.8s-8.6-2.8-9.5-6.8z" fill="#E2B53F"/>
-  <path d="M17.6 25.2h4.8l1 4.3h-6.8z" fill="#E2B53F"/><rect x="13.5" y="29.3" width="13" height="2.6" rx="1.3" fill="#E2B53F"/>
+  <circle cx="20" cy="20" r="19" fill="#7A1712" stroke="#DDB04A" stroke-width="1.2"/>
+  <path class="flame" d="M20 7.5c2.2 2.7 3 4.6 3 6.1a3 3 0 0 1-6 0c0-1.5.8-3.4 3-6.1z" fill="#FFE7A3"/>
+  <path d="M10.5 18.5h19c-.9 4-4.8 6.8-9.5 6.8s-8.6-2.8-9.5-6.8z" fill="#DDB04A"/>
+  <path d="M17.6 25.2h4.8l1 4.3h-6.8z" fill="#DDB04A"/><rect x="13.5" y="29.3" width="13" height="2.6" rx="1.3" fill="#DDB04A"/>
 </svg>`;
+const ORN = `<svg viewBox="0 0 30 18" aria-hidden="true"><path d="M15 2 C19 7 19 11 15 16 C11 11 11 7 15 2Z" fill="currentColor"/><path d="M15 16 C9 15 5 12 3 8 C8 8 12 10 15 16Z M15 16 C21 15 25 12 27 8 C22 8 18 10 15 16Z" fill="currentColor" opacity=".7"/></svg>`;
+const ornTitle = (title, sub = '') => `<div class="orn-title reveal"><h2>${title}</h2><div class="orn">${ORN}</div>${sub ? `<p>${sub}</p>` : ''}</div>`;
+const brandName = () => isSi() ? 'පිත්තල' : 'Pittala';
+const brandSub = () => isSi() ? 'පිළිමතලාව පිත්තල පොළ' : 'Pilimathalawa Brass Bazaar';
 
 const sealHTML = (lg = false) => `<div class="seal ${lg ? 'seal-lg' : ''}" aria-label="Sold out"><div class="seal-stamp">SOLD OUT<small>PILIMATHALAWA</small></div></div>`;
 const SEAL = sealHTML();
@@ -63,7 +68,7 @@ function toast(msg, isErr = false) {
   if (!box) { box = document.createElement('div'); box.className = 'toasts'; box.setAttribute('role', 'status'); document.body.appendChild(box); }
   const t = document.createElement('div');
   t.className = 'toast' + (isErr ? ' err' : '');
-  t.textContent = msg;
+  t.textContent = tr(msg);
   box.appendChild(t);
   setTimeout(() => t.remove(), 3800);
 }
@@ -98,7 +103,7 @@ function countdownParts(ms) {
 const pad = n => String(n).padStart(2, '0');
 function countdownText(end) {
   const c = countdownParts(end - Date.now());
-  if (end <= Date.now()) return 'Deal ended';
+  if (end <= Date.now()) return tr('Deal ended');
   return (c.d ? `${c.d}d ` : '') + `${pad(c.h)}:${pad(c.m)}:${pad(c.s)}`;
 }
 const miniTimer = end => `<span class="mini-timer">${icon('clock')}<span data-countdown="${end}">${countdownText(end)}</span> left</span>`;
@@ -113,6 +118,8 @@ function tickTimers() {
 }
 setInterval(tickTimers, 1000);
 
+
+const itemName = i => { const p = Store.product(i.productId); return p ? L(p, 'name') : i.name; };
 /* ----- product card ----- */
 function shipText(p) {
   const st = Store.s.settings;
@@ -126,20 +133,20 @@ function productCard(p, opts = {}) {
   const deal = Store.dealActive(p);
   const wished = Store.s.wishlist.includes(p.id);
   return `<article class="pcard ${sold ? 'is-sold' : ''}">
-    <a class="pcard-media" href="#/product/${p.id}" aria-label="${esc(p.name)}">
-      <img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy">
-      ${p.badge && !sold ? `<span class="tag-badge">${esc(p.badge)}</span>` : ''}
+    <a class="pcard-media" href="#/product/${p.id}" aria-label="${esc(L(p, 'name'))}">
+      <img src="${esc(p.images[0])}" alt="${esc(L(p, 'name'))}" loading="lazy">
+      ${deal && !sold ? `<span class="deal-ribbon">−${p.discount}%</span>` : p.badge && !sold ? `<span class="tag-badge">${esc(p.badge)}</span>` : ''}
       ${sold ? SEAL : ''}
     </a>
     <button class="wish ${wished ? 'on' : ''}" data-action="wish" data-id="${p.id}" aria-label="${wished ? 'Remove from' : 'Add to'} watchlist" aria-pressed="${wished}">${icon('heart')}</button>
     ${sold ? '' : `<button class="btn btn-brass btn-sm quick-add" data-action="add" data-id="${p.id}">${icon('cart')} Add to cart</button>`}
     <div class="pcard-body">
-      <h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3>
+      <h3><a href="#/product/${p.id}">${esc(L(p, 'name'))}</a></h3>
       <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s><span class="off">${p.discount}% off</span>` : ''}</div>
       ${Store.isFlash(p) && !sold ? miniTimer(p.dealEnds) : ''}
       ${sold ? '<span class="sold-line hot">Sold out</span>' : shipText(p)}
       ${!sold && p.stock <= 3 ? `<span class="low-stock">Only ${p.stock} left</span>` : p.sold >= 40 ? `<span class="sold-line hot">${p.sold} sold</span>` : p.sold ? `<span class="sold-line">${p.sold} sold</span>` : ''}
-      ${opts.hideShop ? '' : `<a class="pcard-shop" href="#/store/${shop.id}">${esc(shop.name)}${shop.rating ? ` · ${feedbackPct(shop)}% positive` : ''}</a>`}
+      ${opts.hideShop ? '' : `<a class="pcard-shop" href="#/store/${shop.id}">${esc(L(shop, 'name'))}${shop.rating ? ` · ${feedbackPct(shop)}% positive` : ''}</a>`}
     </div>
   </article>`;
 }
@@ -149,16 +156,16 @@ function listRow(p) {
   const sold = Store.soldOut(p);
   const deal = Store.dealActive(p);
   return `<article class="lrow ${sold ? 'is-sold' : ''} pcard">
-    <a class="pcard-media" href="#/product/${p.id}"><img src="${esc(p.images[0])}" alt="${esc(p.name)}" loading="lazy">${sold ? SEAL : ''}</a>
+    <a class="pcard-media" href="#/product/${p.id}"><img src="${esc(p.images[0])}" alt="${esc(L(p, 'name'))}" loading="lazy">${sold ? SEAL : ''}</a>
     <div>
-      <h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3>
-      <span class="muted" style="font-size:.85rem">${esc(Store.cat(p.category).name)} · ${esc(p.finish)}</span>
+      <h3><a href="#/product/${p.id}">${esc(L(p, 'name'))}</a></h3>
+      <span class="muted" style="font-size:.85rem">${esc(L(Store.cat(p.category), 'name'))} · ${esc(p.finish)}</span>
       <div class="price"><b>${money(Store.priceOf(p))}</b>${deal ? `<s>${money(p.price)}</s><span class="off">${p.discount}% off</span>` : ''}</div>
       <div class="meta">
         ${Store.isFlash(p) && !sold ? `<span>${miniTimer(p.dealEnds)}</span>` : ''}
         <span>${sold ? '<b style="color:var(--sale)">Sold out</b>' : shipText(p)}</span>
         <span>${p.sold} sold · <span class="rating">${stars(p.rating)} (${p.reviews})</span></span>
-        <span>Seller: <a class="link" href="#/store/${shop.id}">${esc(shop.name)}</a>${shop.rating ? ` (${feedbackPct(shop)}% positive)` : ''} · Pilimathalawa, Kandy</span>
+        <span>Seller: <a class="link" href="#/store/${shop.id}">${esc(L(shop, 'name'))}</a>${shop.rating ? ` (${feedbackPct(shop)}% positive)` : ''} · Pilimathalawa, Kandy</span>
       </div>
       <div class="row-actions" style="margin-top:10px">${sold ? `<button class="btn btn-ghost btn-sm" data-action="notify" data-id="${p.id}">Notify me when back</button>` : `<button class="btn btn-brass btn-sm" data-action="add" data-id="${p.id}">Add to cart</button>`}
         <button class="btn btn-ghost btn-sm" data-action="wish" data-id="${p.id}">${icon('heart')} ${Store.s.wishlist.includes(p.id) ? 'Watching' : 'Watch'}</button></div>
@@ -182,35 +189,42 @@ function renderHeader(route) {
     <span class="sp"></span>
     <a href="#/sell">Sell on Pittala</a>
     <a href="#/about" class="hide-md">About Pilimathalawa brass</a>
-    <a href="tel:${esc(Store.s.settings.supportPhone)}" class="hide-md">Help: ${esc(Store.s.settings.supportPhone)}</a>
+    <span class="lang-toggle" role="group" aria-label="Language"><button data-action="lang" data-l="si" class="${isSi() ? 'on' : ''}" data-notr>සිංහල</button><button data-action="lang" data-l="en" class="${isSi() ? '' : 'on'}" data-notr>English</button></span>
   </div></div>
   <header class="site-header">
     <div class="wrap head-main">
-      <a class="logo" href="#/" aria-label="Pittala.lk home">${LOGO_MARK}<span class="logo-text">Pittala<small>Pilimathalawa Brass Bazaar</small></span></a>
-      <button class="cat-btn" data-action="mega" aria-expanded="false">Shop by<br>category ${icon('menu')}</button>
+      <a class="logo" href="#/" aria-label="Pittala.lk home">${LOGO_MARK}<span class="logo-text" data-notr>${brandName()}<small>${brandSub()}</small></span></a>
+      <button class="cat-btn" data-action="mega" aria-expanded="false">Shop by category ${icon('menu')}</button>
       <form class="search" id="searchForm" role="search">
         <div class="search-box">${icon('search')}<input type="search" id="q" placeholder="Search for pahana, karaduwa, Buddha statue…" autocomplete="off" aria-label="Search"></div>
-        <select id="qcat" aria-label="Category"><option value="">All categories</option>${CATEGORIES.map(c => `<option value="${c.id}" ${cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+        <select id="qcat" aria-label="Category"><option value="">All categories</option>${CATEGORIES.map(c => `<option value="${c.id}" ${cat === c.id ? 'selected' : ''}>${esc(L(c, 'name'))}</option>`).join('')}</select>
         <button class="search-go">Search</button>
         <div class="search-suggest hide" id="suggest"></div>
       </form>
       <div class="header-actions">
+        <button class="icon-btn lang-mini" data-action="lang" data-l="${isSi() ? 'en' : 'si'}" aria-label="Change language" data-notr style="font-weight:700;font-size:.8rem;width:auto;padding:0 8px;border-radius:14px">${isSi() ? 'EN' : 'සිං'}</button>
         <a class="icon-btn" href="#/wishlist" aria-label="Watchlist">${icon('heart')}${Store.s.wishlist.length ? `<span class="count">${Store.s.wishlist.length}</span>` : ''}</a>
         <a class="icon-btn" href="#/cart" aria-label="Cart">${icon('cart')}${Store.cartCount() ? `<span class="count">${Store.cartCount()}</span>` : ''}</a>
-        ${u ? (u.role === 'customer' ? `<a class="btn btn-ghost btn-sm" href="#/dashboard/orders">${icon('user')} <span class="lbl">My orders</span></a>` : `<a class="btn btn-dark btn-sm" href="#/dashboard">${icon('grid')} <span class="lbl">Dashboard</span></a>`) : ''}
+        ${u ? (u.role === 'customer' ? `<a class="btn btn-ghost btn-sm" href="#/dashboard/orders">${icon('user')} <span class="lbl">My orders</span></a>` : `<a class="btn btn-brass btn-sm" href="#/dashboard">${icon('grid')} <span class="lbl">Dashboard</span></a>`) : ''}
       </div>
     </div>
     <nav class="catbar" aria-label="Categories"><div class="wrap">
       <a href="#/" class="${route === '/' ? 'on' : ''}">Home</a>
-      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}" class="${cat === c.id ? 'on' : ''}">${esc(c.name)}</a>`).join('')}
+      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}" class="${cat === c.id ? 'on' : ''}">${esc(L(c, 'name'))}</a>`).join('')}
       <a href="#/deals" class="deal ${route === '/deals' ? 'on' : ''}">Deals</a>
       <a href="#/stores" class="${route.startsWith('/store') ? 'on' : ''}">Shops</a>
     </div></nav>
     <div class="mega hide" id="mega"><div class="wrap">
-      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}"><img src="${esc(c.img)}" alt=""><span><b>${esc(c.name)}</b><small class="si">${esc(c.si)}</small></span></a>`).join('')}
+      ${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}"><img src="${esc(c.img)}" alt=""><span><b>${esc(L(c, 'name'))}</b><small class="si" data-notr>${esc(isSi() ? c.name : c.si)}</small></span></a>`).join('')}
       <a href="#/deals"><span class="avatar" style="background:var(--sale)">%</span><span><b>Daily deals</b><small>Discounts with timers</small></span></a>
     </div></div>
   </header>`;
+}
+
+function renderMobileNav(route) {
+  const u = Store.user();
+  const items = [['#/', 'home', 'Home', route === '/'], ['#/shop', 'grid', 'Shop', route === '/shop'], ['#/deals', 'bolt', 'Deals', route === '/deals'], ['#/cart', 'cart', 'Cart', route === '/cart' || route === '/checkout'], [u ? (u.role === 'customer' ? '#/dashboard/orders' : '#/dashboard') : '#/login', 'user', u ? 'Account' : 'Sign in', route === '/dashboard' || route === '/login']];
+  return `<nav class="mnav" aria-label="Main">${items.map(([h, i, l, on]) => `<a href="${h}" class="${on ? 'on' : ''}">${icon(i)}${i === 'cart' && Store.cartCount() ? `<span class="count">${Store.cartCount()}</span>` : ''}<span>${l}</span></a>`).join('')}</nav>`;
 }
 
 function renderFooter() {
@@ -218,15 +232,15 @@ function renderFooter() {
   return `<footer class="site-footer"><div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="logo" href="#/">${LOGO_MARK}<span class="logo-text">Pittala<small>Pilimathalawa Brass Bazaar</small></span></a>
+        <a class="logo" href="#/">${LOGO_MARK}<span class="logo-text" data-notr>${brandName()}<small>${brandSub()}</small></span></a>
         <p style="margin-top:12px;max-width:40ch">The online marketplace of the brass workshops of Pilimathalawa, Kandy. Every order goes straight to the family that made it.</p>
         <div class="pay-badges"><span>Cash on delivery</span><span>Islandwide delivery</span><span>Verified sellers</span></div>
       </div>
-      <div><h4>Shop</h4>${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}">${esc(c.name)}</a>`).join('')}</div>
+      <div><h4>Shop</h4>${CATEGORIES.map(c => `<a href="#/shop?cat=${c.id}">${esc(L(c, 'name'))}</a>`).join('')}</div>
       <div><h4>Buy</h4><a href="#/deals">Daily deals</a><a href="#/stores">All shops</a><a href="#/track">Track an order</a><a href="#/wishlist">Watchlist</a><a href="#/login">Sign in</a></div>
       <div><h4>Sell</h4><a href="#/sell">Sell on Pittala</a><a href="#/register">Register your shop</a><a href="#/login">Seller sign in</a><h4 style="margin-top:14px">Contact</h4><a href="mailto:${esc(st.supportEmail)}">${esc(st.supportEmail)}</a><a href="tel:${esc(st.supportPhone)}">${esc(st.supportPhone)}</a></div>
     </div>
-    <div class="foot-bottom"><span>© ${new Date().getFullYear()} Pittala.lk — Pilimathalawa, Kandy, Sri Lanka</span><span>Photos: Sri Lankan photographers on Pexels · <a href="#" data-action="reset-demo" style="display:inline">Reset demo data</a></span></div>
+    <div class="foot-bottom"><span>© ${new Date().getFullYear()} Pittala.lk — Pilimathalawa, Kandy, Sri Lanka</span><span>Photos and videos: Sri Lankan creators on Pexels and Pixabay · <a href="#" data-action="reset-demo" style="display:inline">Reset demo data</a></span></div>
   </div></footer>`;
 }
 
